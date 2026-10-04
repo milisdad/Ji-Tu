@@ -1,0 +1,22 @@
+# Unit systemd untuk Agent Ji-Tu (Powered by iNTERCEPT).
+# Template; `setup.sh --role=agent` membuat salinan dengan path yang benar di
+# /etc/systemd/system/ji-tu-agent.service. Untuk pasang manual, sesuaikan
+# WorkingDirectory/ExecStart ke lokasi clone Anda lalu:
+#   sudo cp ji-tu-agent.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now ji-tu-agent
+
+[Unit]
+Description=Ji-Tu Agent (Powered by iNTERCEPT) - node sensor SIGINT
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/Ji-Tu
+ExecStart=/opt/Ji-Tu/venv/bin/python /opt/Ji-Tu/intercept_agent.py --config /opt/Ji-Tu/intercept_agent.cfg
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

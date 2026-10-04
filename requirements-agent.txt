@@ -1,0 +1,30 @@
+# Dependensi Python untuk peran AGENT Ji-Tu (node sensor).
+# Tanpa web stack (Flask/gunicorn): agent memakai http.server stdlib.
+# Agent menurunkan fitur dengan anggun bila paket opsional tidak ada, jadi untuk
+# node single-device Anda boleh memangkas baris yang tidak relevan.
+
+# Komunikasi ke controller (wajib)
+requests>=2.28.0
+
+# DSP untuk dekode (ADS-B/DSC/SSTV/SubGHz) dan analisis TSCM
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Keluaran citra SSTV
+Pillow>=9.0.0
+
+# GPS USB
+pyserial>=3.5
+
+# Telemetri sistem (CPU/RAM/suhu untuk eksperimen E5)
+psutil>=5.9.0
+
+# Bluetooth/BLE (Ubertooth, BT Locate, TSCM)
+bleak>=0.21.0
+cryptography>=41.0.0
+
+# WiFi (deteksi deauth/TSCM)
+scapy>=2.4.5
+
+# Pelacakan satelit (prediksi lintasan)
+skyfield>=1.45

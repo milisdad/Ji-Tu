@@ -32,6 +32,11 @@ The agent system uses a hub-and-spoke architecture where:
 
 ## Quick Start
 
+> **Ji-Tu:** instalasi terpisah per peran tersedia:
+> `./setup.sh --role=controller` (dashboard saja) dan
+> `./setup.sh --role=agent` (pilih single/multi perangkat, environment lean,
+> opsi service systemd). Lihat [JI-TU-DEPLOY-TOPOLOGI.md](JI-TU-DEPLOY-TOPOLOGI.md).
+
 ### 1. Start the Controller
 
 The controller is the main Intercept application:

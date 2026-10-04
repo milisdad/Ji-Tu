@@ -20,10 +20,32 @@ Sumber RF -> Sensor (USB) -> Agent Raspberry Pi -> ZeroTier (overlay) -> Control
 
 ## 1. Controller (laptop)
 
-Jalankan Ji-Tu penuh seperti biasa (port 5050). Halaman kelola agent ada di
-`/controller/manage`, monitor multi-agent di `/controller/monitor`.
+Instal peran controller (web/dashboard saja, tanpa tool SDR lokal):
+
+```bash
+./setup.sh --role=controller
+sudo ./start.sh            # server di http://localhost:5050
+```
+
+Halaman kelola agent ada di `/controller/manage`, monitor multi-agent di
+`/controller/monitor`.
 
 ## 2. Agent (Raspberry Pi)
+
+Instal peran agent. Agent bisa **single-device** (mis. satu Pi RTL-SDR, satu Pi
+HackRF) atau **multi-device**. Instalasi hanya memasang tool perangkat yang
+dipilih, environment agent lean (tanpa Flask), dan opsi service systemd
+`ji-tu-agent`:
+
+```bash
+./setup.sh --role=agent                        # interaktif: single/multi + perangkat
+./setup.sh --role=agent --device=rtlsdr        # non-interaktif, satu perangkat
+./setup.sh --role=agent --device="rtlsdr gps"  # beberapa perangkat
+```
+
+Perangkat yang dikenali: `rtlsdr`, `hackrf`, `ubertooth`, `wifi`, `gps`.
+
+Lalu konfigurasikan agent:
 
 1. Salin `intercept_agent.cfg`, sesuaikan:
    - `[agent] name` = nama node (mis. `pi-perimeter-1`), `port = 8020`.
@@ -31,7 +53,8 @@ Jalankan Ji-Tu penuh seperti biasa (port 5050). Halaman kelola agent ada di
    - `[controller] url` = `http://<ip-zerotier-controller>:5050`.
    - `[controller] api_key` = kunci rahasia bersama (wajib diisi, lihat Keamanan).
    - `[controller] push_enabled = true`, `push_interval` sesuai kebutuhan.
-2. Jalankan `intercept_agent.py` pada Pi dengan SDR terpasang.
+2. Jalankan `intercept_agent.py` pada Pi dengan SDR terpasang, atau lewat
+   service: `sudo systemctl start ji-tu-agent`.
 
 ## 3. ZeroTier (overlay)
 

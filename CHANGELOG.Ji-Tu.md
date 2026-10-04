@@ -25,6 +25,11 @@ Basis fork: upstream `main` @ `7ff4f1d4`, di-fetch 2026-10-04.
   `jitu_measurements`) dan `GET /jitu/measurements/export.csv` untuk parameter yang
   tidak ada di store observasi (ppm/lebar pita/duty/burst) — untuk E1/E4.
 - Tombol "Unduh CSV" pada mode Activity untuk ekspor observasi dari UI.
+- Instalasi terpisah per peran di `setup.sh`: `--role=controller` (web/dashboard
+  saja, tanpa tool SDR) dan `--role=agent` dengan pilihan single/multi perangkat
+  (`--device=rtlsdr|hackrf|ubertooth|wifi|gps`), environment agent lean via
+  `requirements-agent.txt` (tanpa Flask), dan service systemd `ji-tu-agent`.
+  Aditif: alur instalasi default tidak berubah.
 
 ### Changed
 - Rebrand visual ke Unjaya: logo header, dashboard, dan login memakai

@@ -82,6 +82,8 @@ show_banner() {
 NON_INTERACTIVE=false
 CLI_PROFILES=""
 CLI_ACTION=""
+ROLE=""          # Ji-Tu: agent | controller (kosong = alur instal biasa)
+CLI_DEVICE=""    # Ji-Tu: perangkat agent (mis. "rtlsdr" atau "rtlsdr gps")
 
 cmd_exists() {
   local c="$1"
@@ -2899,6 +2901,12 @@ parse_args() {
       --menu)
         CLI_ACTION="menu"
         ;;
+      --role=*)
+        ROLE="${arg#--role=}"
+        ;;
+      --device=*)
+        CLI_DEVICE="${arg#--device=}"
+        ;;
       --help|-h)
         echo "INTERCEPT Setup Script"
         echo ""
@@ -2911,6 +2919,8 @@ parse_args() {
         echo "  --health-check       Run system health check and exit"
         echo "  --postgres-setup     Run PostgreSQL database setup and exit"
         echo "  --menu               Force interactive menu (even on first run)"
+        echo "  --role=ROLE          Distributed install: agent | controller"
+        echo "  --device=LIST        Agent devices: rtlsdr hackrf ubertooth wifi gps"
         echo "  -h, --help           Show this help"
         echo ""
         echo "Examples:"
@@ -2945,6 +2955,156 @@ profiles_to_mask() {
 }
 
 # ============================================================
+# JI-TU: DISTRIBUTED ROLE INSTALL (agent / controller)
+# Aditif: hanya aktif bila --role diberikan; alur default tak tersentuh.
+# ============================================================
+
+# Pilih perangkat agent (single/multi). Prompt ke stderr; perangkat ke stdout.
+agent_select_devices() {
+  if [[ -n "$CLI_DEVICE" ]]; then echo "$CLI_DEVICE"; return 0; fi
+  {
+    echo ""
+    echo "Konfigurasi perangkat agent:"
+    echo "  1) Single - satu perangkat SDR"
+    echo "  2) Multi  - beberapa perangkat"
+    printf "Pilih [1/2]: "
+  } >&2
+  local mode; read -r mode </dev/tty
+  {
+    echo ""
+    echo "Perangkat tersedia:"
+    echo "  rtlsdr    - RTL-SDR (ADS-B, AIS, 433MHz, pager, APRS)"
+    echo "  hackrf    - HackRF (SubGHz, sweep drone 2.4/5.8 GHz)"
+    echo "  ubertooth - Ubertooth / Bluetooth"
+    echo "  wifi      - Adapter WiFi (mode monitor)"
+    echo "  gps       - GPS (gpsd)"
+    if [[ "$mode" == "2" ]]; then
+      printf "Masukkan perangkat (pisah spasi), mis. 'rtlsdr gps': "
+    else
+      printf "Masukkan SATU perangkat, mis. 'hackrf': "
+    fi
+  } >&2
+  local sel; read -r sel </dev/tty
+  echo "$sel"
+}
+
+# Pasang tool per perangkat yang dipilih (memakai fungsi install_tool_* yang ada).
+agent_install_device_tools() {
+  local d
+  for d in $1; do
+    case "$d" in
+      rtlsdr)
+        if [[ "$OS" == "debian" ]]; then
+          install_rtlsdr_blog_drivers_debian
+          setup_udev_rules_debian
+          blacklist_kernel_drivers_debian
+        fi
+        install_tool_rtl_sdr
+        install_tool_rtl_433
+        install_tool_dump1090
+        install_tool_multimon_ng
+        ;;
+      hackrf)    install_tool_hackrf; install_tool_soapysdr ;;
+      ubertooth) install_tool_bluez; install_tool_ubertooth ;;
+      wifi)      install_tool_aircrack_ng ;;
+      gps)       install_tool_gpsd ;;
+      "")        : ;;
+      *)         warn "Perangkat tak dikenal: '$d' (lewati)" ;;
+    esac
+  done
+}
+
+# Environment Python lean untuk agent (TANPA Flask/web stack).
+install_agent_python_deps() {
+  progress "Menyiapkan environment Python agent (tanpa web stack)"
+  check_python_version
+  local REQ="requirements-agent.txt"
+  if [[ ! -f "$REQ" ]]; then
+    warn "$REQ tidak ditemukan; melewati dependensi Python agent."
+    return 0
+  fi
+  if [[ ! -d venv ]]; then
+    python3 -m venv --system-site-packages venv && ok "venv/ dibuat"
+  else
+    ok "Memakai venv/ yang ada"
+  fi
+  # shellcheck disable=SC1091
+  source venv/bin/activate
+  local PIP="venv/bin/python -m pip"
+  local PIP_OPTS="--no-cache-dir --timeout 120 --prefer-binary"
+  $PIP install $PIP_OPTS --upgrade pip setuptools wheel >/dev/null 2>&1 || warn "Upgrade pip gagal; lanjut"
+  info "Memasang dependensi agent dari $REQ ..."
+  if ! $PIP install $PIP_OPTS -r "$REQ"; then
+    warn "Sebagian paket agent gagal dipasang (fitur terkait mungkin tak tersedia)"
+  fi
+  ok "Dependensi Python agent selesai"
+}
+
+# Pasang service systemd agar agent otomatis jalan saat boot.
+install_agent_service() {
+  if [[ "$OS" != "debian" ]] || ! cmd_exists systemctl; then
+    info "Lewati service systemd (systemctl tak tersedia)"
+    return 0
+  fi
+  if ! ask_yes_no "Pasang service systemd 'ji-tu-agent' (auto-start saat boot)?" "y"; then
+    return 0
+  fi
+  local dir; dir="$(pwd)"
+  $SUDO tee /etc/systemd/system/ji-tu-agent.service >/dev/null <<EOF
+[Unit]
+Description=Ji-Tu Agent (Powered by iNTERCEPT) - node sensor SIGINT
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=${dir}
+ExecStart=${dir}/venv/bin/python ${dir}/intercept_agent.py --config ${dir}/intercept_agent.cfg
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  $SUDO systemctl daemon-reload
+  $SUDO systemctl enable ji-tu-agent.service >/dev/null 2>&1 || true
+  ok "Service ji-tu-agent terpasang. Mulai dengan: sudo systemctl start ji-tu-agent"
+}
+
+# Dispatcher instalasi berbasis peran.
+do_role_install() {
+  need_sudo
+  case "$ROLE" in
+    controller)
+      info "Instalasi peran: CONTROLLER (dashboard, tanpa tool SDR lokal)"
+      install_python_deps
+      echo
+      ok "Controller siap."
+      echo "  Jalankan : sudo ./start.sh   (buka http://localhost:5050)"
+      echo "  Daftarkan agent di /controller/manage memakai IP ZeroTier:8020"
+      ;;
+    agent)
+      info "Instalasi peran: AGENT (node sensor)"
+      local devices; devices="$(agent_select_devices)"
+      info "Perangkat dipilih: ${devices:-(none)}"
+      agent_install_device_tools "$devices"
+      install_agent_python_deps
+      install_agent_service
+      echo
+      ok "Agent siap."
+      echo "  1) Salin & sunting intercept_agent.cfg (name, controller.url ZeroTier, api_key, push_enabled=true)"
+      echo "  2) Jalankan: venv/bin/python intercept_agent.py --config intercept_agent.cfg"
+      echo "     atau via service: sudo systemctl start ji-tu-agent"
+      ;;
+    *)
+      fail "ROLE tidak dikenal: '$ROLE' (gunakan agent atau controller)"
+      exit 1
+      ;;
+  esac
+}
+
+# ============================================================
 # MAIN ENTRY POINT
 # ============================================================
 main() {
@@ -2953,6 +3113,12 @@ main() {
 
   detect_os
   detect_dragonos
+
+  # Ji-Tu: instalasi terdistribusi berbasis peran (aditif).
+  if [[ -n "$ROLE" ]]; then
+    do_role_install
+    exit 0
+  fi
 
   # Handle CLI actions
   if [[ "$CLI_ACTION" == "health-check" ]]; then
