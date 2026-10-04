@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="static/img/logo-unjaya-white.png">
+    <img src="static/img/logo-unjaya.png" alt="Universitas Jenderal Achmad Yani Yogyakarta (Unjaya)" width="320">
+  </picture>
+</p>
+
 <h1 align="center">Ji-Tu</h1>
 <p align="center"><em>Powered by iNTERCEPT</em></p>
 
@@ -27,13 +34,13 @@
 ---
 
 <!-- ji-tu:fork-notice:start -->
-> **Catatan fork — Ji-Tu.** Repositori ini adalah turunan (fork) dari
+> **Catatan fork - Ji-Tu.** Repositori ini adalah turunan (fork) dari
 > [smittix/intercept](https://github.com/smittix/intercept) ("iNTERCEPT"), yang
 > dilisensikan Apache-2.0. Ji-Tu dipelihara di lingkungan Universitas Jenderal
-> Achmad Yani (Unjaya) dan dimodifikasi untuk menyesuaikan perangkat pendukung
-> signal intelligence yang dimiliki serta kasus pengujian internal. Karya asli
-> adalah hak cipta para kontributor iNTERCEPT. Perubahan khusus Ji-Tu dicatat di
-> [CHANGELOG.Ji-Tu.md](CHANGELOG.Ji-Tu.md); teks lisensi penuh ada di
+> Achmad Yani Yogyakarta (Unjaya) dan dimodifikasi untuk menyesuaikan perangkat
+> pendukung signal intelligence yang dimiliki serta kasus pengujian internal.
+> Karya asli adalah hak cipta para kontributor iNTERCEPT. Perubahan khusus Ji-Tu
+> dicatat di [CHANGELOG.Ji-Tu.md](CHANGELOG.Ji-Tu.md); teks lisensi penuh ada di
 > [LICENSE](LICENSE).
 <!-- ji-tu:fork-notice:end -->
 
@@ -270,7 +277,7 @@ Lisensi Apache 2.0 - lihat [LICENSE](LICENSE)
 
 ## Penulis
 
-Proyek asli (iNTERCEPT) dibuat oleh **smittix** - [GitHub](https://github.com/smittix). Fork Ji-Tu dipelihara di lingkungan Universitas Jenderal Achmad Yani (Unjaya).
+Proyek asli (iNTERCEPT) dibuat oleh **smittix** - [GitHub](https://github.com/smittix). Fork Ji-Tu dipelihara di lingkungan Universitas Jenderal Achmad Yani Yogyakarta (Unjaya).
 
 ## Penghargaan
 
