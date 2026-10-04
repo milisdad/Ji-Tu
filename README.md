@@ -39,53 +39,53 @@
 
 ---
 
-## Features
+## Fitur
 
-- **Pager Decoding** - POCSAG/FLEX via rtl_fm + multimon-ng
-- **433MHz Sensors** - Weather stations, TPMS, IoT devices via rtl_433
-- **Sub-GHz Analyzer** - RF capture and protocol decoding for 300-928 MHz ISM bands via HackRF
-- **Aircraft Tracking** - ADS-B via dump1090 with real-time map and radar
-- **Vessel Tracking** - AIS ship tracking with VHF DSC distress monitoring
-- **ACARS Messaging** - Aircraft datalink messages via acarsdec
-- **VDL2** - VHF Data Link Mode 2 aircraft datalink decoding via dumpvdl2
-- **Listening Post** - Wideband frequency scanner with real-time audio monitoring
-- **Weather Satellites** - NOAA APT and Meteor LRPT image decoding via SatDump with auto-scheduler
-- **WebSDR** - Remote HF/shortwave listening via KiwiSDR network
-- **ISS SSTV** - Slow-scan TV image reception from the International Space Station
-- **HF SSTV** - Terrestrial SSTV on shortwave frequencies (80m-10m, VHF, UHF)
-- **APRS** - Amateur packet radio position reports and telemetry via direwolf
-- **Satellite Tracking** - Pass prediction with polar plot and ground track map
-- **Utility Meters** - Electric, gas, and water meter reading via rtlamr
-- **ADS-B History** - Persistent aircraft history with reporting dashboard (Postgres optional)
-- **WiFi Scanning** - Monitor mode reconnaissance via aircrack-ng
-- **Bluetooth Scanning** - Device discovery and tracker detection (with Ubertooth support)
-- **BT Locate** - SAR Bluetooth device location with GPS-tagged signal trail mapping and proximity alerts
-- **WiFi Locate** - Locate WiFi access points by BSSID with real-time signal meter, distance estimation, and proximity audio
-- **GPS** - Real-time GPS position tracking with live map, speed, altitude, and satellite info
-- **TSCM** - Counter-surveillance with RF baseline comparison and threat detection
-- **Meshtastic** - LoRa mesh network integration
-- **Space Weather** - Real-time solar and geomagnetic data from NOAA SWPC, NASA SDO, and HamQSL (no SDR required)
-- **Spy Stations** - Number stations and diplomatic HF network database
-- **Remote Agents** - Distributed SIGINT with remote sensor nodes
-- **Offline Mode** - Bundled assets for air-gapped/field deployments
-- **Drone Intelligence** - Multi-vector UAV detection via ASTM F3411 Remote ID (WiFi/BLE), RTL-SDR 433/868 MHz RF, and HackRF 2.4/5.8 GHz scanning with live contact map and risk scoring
+- **Dekode Pager** - POCSAG/FLEX via rtl_fm + multimon-ng
+- **Sensor 433MHz** - Stasiun cuaca, TPMS, perangkat IoT via rtl_433
+- **Penganalisis Sub-GHz** - Perekaman RF dan dekode protokol untuk pita ISM 300-928 MHz via HackRF
+- **Pelacakan Pesawat** - ADS-B via dump1090 dengan peta dan radar real-time
+- **Pelacakan Kapal** - Pelacakan kapal AIS dengan pemantauan marabahaya VHF DSC
+- **Pesan ACARS** - Pesan datalink pesawat via acarsdec
+- **VDL2** - Dekode datalink pesawat VHF Data Link Mode 2 via dumpvdl2
+- **Listening Post** - Pemindai frekuensi wideband dengan pemantauan audio real-time
+- **Satelit Cuaca** - Dekode citra NOAA APT dan Meteor LRPT via SatDump dengan penjadwal otomatis
+- **WebSDR** - Mendengarkan HF/gelombang pendek jarak jauh via jaringan KiwiSDR
+- **ISS SSTV** - Penerimaan citra slow-scan TV dari International Space Station
+- **HF SSTV** - SSTV terestrial pada frekuensi gelombang pendek (80m-10m, VHF, UHF)
+- **APRS** - Laporan posisi dan telemetri radio paket amatir via direwolf
+- **Pelacakan Satelit** - Prediksi lintasan dengan polar plot dan peta ground track
+- **Meter Utilitas** - Pembacaan meter listrik, gas, dan air via rtlamr
+- **Riwayat ADS-B** - Riwayat pesawat persisten dengan dashboard pelaporan (Postgres opsional)
+- **Pemindaian WiFi** - Pengintaian mode monitor via aircrack-ng
+- **Pemindaian Bluetooth** - Penemuan perangkat dan deteksi tracker (dengan dukungan Ubertooth)
+- **BT Locate** - Pelokasian perangkat Bluetooth SAR dengan pemetaan jejak sinyal bertanda GPS dan peringatan kedekatan
+- **WiFi Locate** - Lokasikan titik akses WiFi berdasarkan BSSID dengan meter sinyal real-time, estimasi jarak, dan audio kedekatan
+- **GPS** - Pelacakan posisi GPS real-time dengan peta langsung, kecepatan, ketinggian, dan info satelit
+- **TSCM** - Kontra-surveilans dengan perbandingan baseline RF dan deteksi ancaman
+- **Meshtastic** - Integrasi jaringan mesh LoRa
+- **Cuaca Antariksa** - Data surya dan geomagnetik real-time dari NOAA SWPC, NASA SDO, dan HamQSL (tanpa SDR)
+- **Spy Stations** - Basis data number station dan jaringan HF diplomatik
+- **Remote Agents** - SIGINT terdistribusi dengan node sensor jarak jauh
+- **Mode Offline** - Aset terbundel untuk deployment air-gapped/lapangan
+- **Drone Intelligence** - Deteksi UAV multi-vektor via ASTM F3411 Remote ID (WiFi/BLE), RF RTL-SDR 433/868 MHz, dan sweep HackRF 2.4/5.8 GHz dengan peta kontak langsung dan skor risiko
 
 ---
 
-## Installation / Debian / Ubuntu / macOS
+## Instalasi / Debian / Ubuntu / macOS
 
-### Quick Start
+### Mulai Cepat
 
 ```bash
-git clone https://github.com/smittix/intercept.git
-cd intercept
-./setup.sh          # Interactive menu (first run launches setup wizard)
+git clone https://github.com/milisdad/Ji-Tu.git
+cd Ji-Tu
+./setup.sh          # Menu interaktif (jalankan pertama memunculkan wizard setup)
 sudo ./start.sh
 ```
 
-On first run, `setup.sh` launches a **guided wizard** that detects your OS, lets you choose install profiles, sets up the Python environment, and optionally configures environment variables and PostgreSQL.
+Saat dijalankan pertama kali, `setup.sh` memunculkan **wizard terpandu** yang mendeteksi OS Anda, memilih profil instalasi, menyiapkan environment Python, dan opsional mengatur variabel environment serta PostgreSQL.
 
-On subsequent runs, it opens an **interactive menu**:
+Pada menjalankan berikutnya, ia membuka **menu interaktif**:
 
 ```
 INTERCEPT Setup Menu
@@ -100,71 +100,71 @@ INTERCEPT Setup Menu
   0) Exit
 ```
 
-> **Production vs Dev server:** `start.sh` auto-detects gunicorn + gevent and runs a production server with cooperative greenlets — handles multiple SSE/WebSocket clients without blocking. Falls back to Flask dev server if gunicorn is not installed. For quick local development, you can still use `sudo -E venv/bin/python intercept.py` directly.
+> **Server produksi vs dev:** `start.sh` otomatis mendeteksi gunicorn + gevent dan menjalankan server produksi dengan cooperative greenlet - menangani banyak klien SSE/WebSocket tanpa memblokir. Jatuh kembali ke server dev Flask bila gunicorn tidak terpasang. Untuk pengembangan lokal cepat, Anda tetap bisa memakai `sudo -E venv/bin/python intercept.py` langsung.
 
-### Install Profiles
+### Profil Instalasi
 
-Choose what to install during the wizard or via menu option 1:
+Pilih apa yang dipasang saat wizard atau lewat menu opsi 1:
 
-| # | Profile | Tools |
-|---|---------|-------|
+| # | Profil | Alat |
+|---|--------|------|
 | 1 | Core SIGINT | rtl_sdr, multimon-ng, rtl_433, dump1090, acarsdec, dumpvdl2, ffmpeg, gpsd |
-| 2 | Maritime & Radio | AIS-catcher, direwolf |
-| 3 | Weather & Space | SatDump, radiosonde_auto_rx |
-| 4 | RF Security | aircrack-ng, HackRF, BlueZ, hcxtools, Ubertooth, SoapySDR |
-| 5 | Full SIGINT | All of the above |
-| 6 | Custom | Per-tool checklist |
+| 2 | Maritim & Radio | AIS-catcher, direwolf |
+| 3 | Cuaca & Antariksa | SatDump, radiosonde_auto_rx |
+| 4 | Keamanan RF | aircrack-ng, HackRF, BlueZ, hcxtools, Ubertooth, SoapySDR |
+| 5 | Full SIGINT | Semua di atas |
+| 6 | Custom | Daftar centang per alat |
 
-Multiple profiles can be combined (e.g. enter `1 3` for Core + Weather).
+Beberapa profil bisa digabung (mis. masukkan `1 3` untuk Core + Cuaca).
 
-### CLI Flags
+### Opsi CLI
 
 ```bash
-./setup.sh --non-interactive          # Headless full install (same as legacy behavior)
-./setup.sh --profile=core,weather     # Install specific profiles
-./setup.sh --health-check             # Check system health and exit
-./setup.sh --postgres-setup           # Run PostgreSQL setup and exit
-./setup.sh --menu                     # Force interactive menu
+./setup.sh --non-interactive          # Instalasi penuh tanpa interaksi (seperti perilaku lama)
+./setup.sh --profile=core,weather     # Pasang profil tertentu
+./setup.sh --health-check             # Periksa kesehatan sistem lalu keluar
+./setup.sh --postgres-setup           # Jalankan setup PostgreSQL lalu keluar
+./setup.sh --menu                     # Paksa menu interaktif
 ```
 
 ### Docker
 
 ```bash
-git clone https://github.com/smittix/intercept.git
-cd intercept
+git clone https://github.com/milisdad/Ji-Tu.git
+cd Ji-Tu
 docker compose --profile basic up -d --build
 ```
 
-> **Note:** Docker requires privileged mode for USB SDR access. SDR devices are passed through via `/dev/bus/usb`.
+> **Catatan:** Docker memerlukan mode privileged untuk akses USB SDR. Perangkat SDR diteruskan via `/dev/bus/usb`.
 
-For multi-architecture builds (amd64 + arm64 for Raspberry Pi), see `build-multiarch.sh` — it handles cross-compilation and registry push in one step.
+Untuk build multi-arsitektur (amd64 + arm64 untuk Raspberry Pi), lihat `build-multiarch.sh` - menangani kompilasi silang dan push registry dalam satu langkah.
 
-### Environment Configuration
+### Konfigurasi Environment
 
-Use the **Environment Configurator** (menu option 5) to interactively set any `INTERCEPT_*` variable. Settings are saved to a `.env` file that `start.sh` sources automatically on startup.
+Gunakan **Environment Configurator** (menu opsi 5) untuk mengatur variabel `INTERCEPT_*` secara interaktif. Pengaturan disimpan ke file `.env` yang otomatis dibaca `start.sh` saat startup.
 
-You can also create or edit `.env` manually:
+Anda juga bisa membuat atau menyunting `.env` secara manual:
 
 ```bash
-# .env (auto-loaded by start.sh)
+# .env (dimuat otomatis oleh start.sh)
 INTERCEPT_PORT=5050
 INTERCEPT_ADSB_AUTO_START=true
 INTERCEPT_DEFAULT_LAT=51.5074
 INTERCEPT_DEFAULT_LON=-0.1278
 ```
 
-### ADS-B History (Optional)
+### Riwayat ADS-B (Opsional)
 
-The ADS-B history feature persists aircraft messages to PostgreSQL for long-term analysis.
+Fitur riwayat ADS-B menyimpan pesan pesawat ke PostgreSQL untuk analisis jangka panjang.
 
-**Automated setup (local install):**
+**Setup otomatis (instalasi lokal):**
 
 ```bash
 ./setup.sh --postgres-setup
-# Or use menu option 3: Database Setup
+# Atau pakai menu opsi 3: Database Setup
 ```
 
-This will install PostgreSQL if needed, create the database/user/tables, and write the connection settings to `.env`.
+Ini akan memasang PostgreSQL bila perlu, membuat database/user/tabel, dan menulis pengaturan koneksi ke `.env`.
 
 **Docker:**
 
@@ -172,7 +172,7 @@ This will install PostgreSQL if needed, create the database/user/tables, and wri
 docker compose --profile history up -d
 ```
 
-Set the following environment variables (in `.env`):
+Setel variabel environment berikut (di `.env`):
 
 ```bash
 INTERCEPT_ADSB_HISTORY_ENABLED=true
@@ -183,97 +183,96 @@ INTERCEPT_ADSB_DB_USER=intercept
 INTERCEPT_ADSB_DB_PASSWORD=intercept
 ```
 
-To store Postgres data on external storage, set `PGDATA_PATH` (defaults to `./pgdata`):
+Untuk menyimpan data Postgres di penyimpanan eksternal, setel `PGDATA_PATH` (default `./pgdata`):
 
 ```bash
 PGDATA_PATH=/mnt/usbpi1/intercept/pgdata
 ```
 
-Then open **/adsb/history** for the reporting dashboard.
+Lalu buka **/adsb/history** untuk dashboard pelaporan.
 
-### System Health Check
+### Pemeriksaan Kesehatan Sistem
 
-Verify your installation is complete and working:
+Verifikasi instalasi Anda lengkap dan berfungsi:
 
 ```bash
 ./setup.sh --health-check
-# Or use menu option 2
+# Atau pakai menu opsi 2
 ```
 
-Checks installed tools, SDR devices, port availability, permissions, Python venv, `.env` configuration, and PostgreSQL connectivity.
+Memeriksa alat terpasang, perangkat SDR, ketersediaan port, izin, venv Python, konfigurasi `.env`, dan konektivitas PostgreSQL.
 
-### Open the Interface
+### Membuka Antarmuka
 
-After starting, open **http://localhost:5050** in your browser.
+Setelah dijalankan, buka **http://localhost:5050** di browser Anda.
 
-**There is no default password.** On first start, INTERCEPT generates one for the `admin` account, logs it, and writes it to `instance/.initial_password`. Log in with that, and you will be asked to set your own before the interface unlocks.
+**Tidak ada kata sandi default.** Pada start pertama, Ji-Tu membuat satu kata sandi untuk akun `admin`, mencatatnya di log, dan menuliskannya ke `instance/.initial_password`. Masuk dengan itu, lalu Anda diminta menetapkan kata sandi sendiri sebelum antarmuka terbuka.
 
-To choose your own up front, set `INTERCEPT_ADMIN_PASSWORD` before first start. See [Security](docs/SECURITY.md#authentication) for details and for why this replaced the previous `admin`/`admin` default.
-
----
-
-## Hardware Requirements
-
-| Hardware | Purpose | Price |
-|----------|---------|-------|
-| **RTL-SDR** | Required for all SDR features | ~$25-35 |
-| **WiFi adapter** | Must support promiscuous (monitor) mode | ~$20-40 |
-| **Bluetooth adapter** | Device scanning (usually built-in) | - |
-| **GPS** | Any Linux supported GPS Unit | ~10 |
-
-Most features work with a basic RTL-SDR dongle (RTL2832U + R820T2).
-
-| :exclamation:  Not using an RTL-SDR Device?   |
-|-----------------------------------------------
-|Intercept supports any device that SoapySDR supports. You must however have the correct module for your device installed! For example if you have an SDRPlay device you'd need to install soapysdr-module-sdrplay.
-
-| :exclamation:  GPS Usage   |
-|-----------------------------------------------
-|gpsd is needed for real time location. Intercept automatically checks to see if you're running gpsd in the background when any maps are rendered.
+Untuk menentukan sendiri di awal, setel `INTERCEPT_ADMIN_PASSWORD` sebelum start pertama. Lihat [Keamanan](docs/SECURITY.md#authentication) untuk detail dan alasan penggantian default `admin`/`admin` sebelumnya.
 
 ---
 
-## Discord Server
+## Kebutuhan Perangkat Keras
+
+| Perangkat | Fungsi | Harga |
+|-----------|--------|-------|
+| **RTL-SDR** | Wajib untuk semua fitur SDR | ~$25-35 |
+| **Adapter WiFi** | Harus mendukung mode promiscuous (monitor) | ~$20-40 |
+| **Adapter Bluetooth** | Pemindaian perangkat (umumnya bawaan) | - |
+| **GPS** | Unit GPS apa pun yang didukung Linux | ~$10 |
+
+Sebagian besar fitur bekerja dengan dongle RTL-SDR dasar (RTL2832U + R820T2).
+
+> :exclamation: **Tidak memakai perangkat RTL-SDR?**
+> Ji-Tu mendukung perangkat apa pun yang didukung SoapySDR. Namun Anda harus memasang modul yang sesuai untuk perangkat Anda. Misalnya untuk perangkat SDRplay, pasang `soapysdr-module-sdrplay`.
+
+> :exclamation: **Penggunaan GPS**
+> gpsd diperlukan untuk lokasi real-time. Ji-Tu otomatis memeriksa apakah gpsd berjalan di latar saat peta dirender.
+
+---
+
+## Server Discord
 
 <p align="center">
-  <a href="https://discord.gg/EyeksEJmWE">Join our Discord</a>
+  <a href="https://discord.gg/EyeksEJmWE">Gabung Discord kami</a>
 </p>
 
+---
+
+## Dokumentasi
+
+- [Panduan Penggunaan](docs/USAGE.md) - Instruksi rinci tiap mode
+- [Panduan Perangkat Keras](docs/HARDWARE.md) - Perangkat SDR, instalasi manual, dan setup lanjutan
+- [Pemecahan Masalah](docs/TROUBLESHOOTING.md) - Masalah umum dan solusinya
+- [Agent Terdistribusi](docs/DISTRIBUTED_AGENTS.md) - Deployment node sensor jarak jauh
+- [Webhook](docs/WEBHOOKS.md) - Aturan peringatan dan integrasi webhook
+- [Keamanan](docs/SECURITY.md) - Keamanan jaringan dan praktik terbaik
+- [Ruang Lingkup Ji-Tu](docs/JI-TU-RUANG-LINGKUP.md) - Penyelarasan dengan studi SIGINT/OMSP
+- [Deploy Topologi Ji-Tu](docs/JI-TU-DEPLOY-TOPOLOGI.md) - Topologi 5 tahap (agent + ZeroTier + controller)
 
 ---
 
-## Documentation
+## Penafian
 
-- [Usage Guide](docs/USAGE.md) - Detailed instructions for each mode
-- [Hardware Guide](docs/HARDWARE.md) - SDR hardware, manual install, and advanced setup
-- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
-- [Distributed Agents](docs/DISTRIBUTED_AGENTS.md) - Remote sensor node deployment
-- [Webhooks](docs/WEBHOOKS.md) - Alert rules and webhook integration
-- [Security](docs/SECURITY.md) - Network security and best practices
+Proyek ini dikembangkan dengan AI sebagai mitra pengodean, memadukan arahan manusia dengan implementasi berbantuan AI. Tujuannya: membuat Software Defined Radio lebih mudah diakses dengan antarmuka terpadu yang rapi untuk alat SDR umum.
 
----
+**Perangkat lunak ini hanya untuk tujuan edukasi dan pengujian yang berwenang.**
 
-## Disclaimer
-
-This project was developed using AI as a coding partner, combining human direction with AI-assisted implementation. The goal: make Software Defined Radio more accessible by providing a clean, unified interface for common SDR tools.
-
-**This software is for educational and authorized testing purposes only.**
-
-- Only use with proper authorization
-- Intercepting communications without consent may be illegal
-- You are responsible for compliance with applicable laws
+- Gunakan hanya dengan otorisasi yang sah
+- Menyadap komunikasi tanpa persetujuan dapat melanggar hukum
+- Anda bertanggung jawab atas kepatuhan terhadap hukum yang berlaku
 
 ---
 
-## License
+## Lisensi
 
-Apache 2.0 License - see [LICENSE](LICENSE)
+Lisensi Apache 2.0 - lihat [LICENSE](LICENSE)
 
-## Author
+## Penulis
 
-Created by **smittix** - [GitHub](https://github.com/smittix)
+Proyek asli (iNTERCEPT) dibuat oleh **smittix** - [GitHub](https://github.com/smittix). Fork Ji-Tu dipelihara di lingkungan Universitas Jenderal Achmad Yani (Unjaya).
 
-## Acknowledgments
+## Penghargaan
 
 [rtl-sdr](https://osmocom.org/projects/rtl-sdr/wiki) |
 [multimon-ng](https://github.com/EliasOenal/multimon-ng) |
@@ -289,13 +288,3 @@ Created by **smittix** - [GitHub](https://github.com/smittix)
 [SatDump](https://github.com/SatDump/SatDump) |
 [Celestrak](https://celestrak.org/) |
 [Priyom.org](https://priyom.org/)
-
-
-
-
-
-
-
-
-
-
