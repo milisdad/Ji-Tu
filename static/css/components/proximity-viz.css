@@ -166,7 +166,7 @@
 }
 
 .heatmap-select:hover {
-    border-color: var(--accent-color, #00d4ff);
+    border-color: var(--accent-color, var(--accent-cyan));
 }
 
 .heatmap-btn {

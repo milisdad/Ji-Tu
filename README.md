@@ -26,6 +26,19 @@ Support the developer of this open-source project
 
 ---
 
+<!-- ji-tu:fork-notice:start -->
+> **Catatan fork — Ji-Tu.** Repositori ini adalah turunan (fork) dari
+> [smittix/intercept](https://github.com/smittix/intercept) ("iNTERCEPT"), yang
+> dilisensikan Apache-2.0. Ji-Tu dipelihara di lingkungan Universitas Jenderal
+> Achmad Yani (Unjaya) dan dimodifikasi untuk menyesuaikan perangkat pendukung
+> signal intelligence yang dimiliki serta kasus pengujian internal. Karya asli
+> adalah hak cipta para kontributor iNTERCEPT. Perubahan khusus Ji-Tu dicatat di
+> [CHANGELOG.Ji-Tu.md](CHANGELOG.Ji-Tu.md); teks lisensi penuh ada di
+> [LICENSE](LICENSE).
+<!-- ji-tu:fork-notice:end -->
+
+---
+
 ## Features
 
 - **Pager Decoding** - POCSAG/FLEX via rtl_fm + multimon-ng

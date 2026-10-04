@@ -922,7 +922,7 @@ function showInfo(message) {
 // Theme toggle functions
 function toggleTheme() {
     const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme') || 'dark';
+    const currentTheme = html.getAttribute('data-theme') || 'light';
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
     html.setAttribute('data-theme', newTheme);
@@ -941,7 +941,7 @@ function toggleTheme() {
 // Load saved theme on page load
 (function () {
     // First apply localStorage theme for instant load (no flash)
-    const localTheme = localStorage.getItem('intercept-theme') || 'dark';
+    const localTheme = localStorage.getItem('intercept-theme') || 'light';
     document.documentElement.setAttribute('data-theme', localTheme);
 
     // Then fetch from server to sync (in case changed on another device)

@@ -16,7 +16,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     border-bottom: 1px solid rgba(var(--accent-cyan-rgb), 0.2);
     padding-bottom: 6px;
     margin-top: 8px;
@@ -99,7 +99,7 @@
 }
 
 .sys-metric-bar-fill.ok {
-    background: var(--accent-green, #00ff88);
+    background: var(--accent-green, var(--accent-green));
 }
 
 .sys-metric-bar-fill.warn {
@@ -159,7 +159,7 @@
     filter: drop-shadow(0 0 4px currentColor);
 }
 
-.sys-gauge-arc .arc-fill.ok { stroke: var(--accent-green, #00ff88); }
+.sys-gauge-arc .arc-fill.ok { stroke: var(--accent-green, var(--accent-green)); }
 .sys-gauge-arc .arc-fill.warn { stroke: var(--accent-yellow, #ffcc00); }
 .sys-gauge-arc .arc-fill.crit { stroke: var(--accent-red, #ff3366); }
 
@@ -219,7 +219,7 @@
 
 .sys-sparkline-line {
     fill: none;
-    stroke: var(--accent-cyan, #00d4ff);
+    stroke: var(--accent-cyan, var(--accent-cyan));
     stroke-width: 1.5;
     filter: drop-shadow(0 0 2px rgba(var(--accent-cyan-rgb), 0.4));
 }
@@ -359,7 +359,7 @@
 
 .sys-net-iface-name {
     font-weight: 700;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     font-size: 11px;
 }
 
@@ -384,11 +384,11 @@
 }
 
 .sys-bw-up {
-    color: var(--accent-green, #00ff88);
+    color: var(--accent-green, var(--accent-green));
 }
 
 .sys-bw-down {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* Globe container — compact vertical layout */
@@ -435,7 +435,7 @@
 }
 
 .sys-gps-dot.fix-3d {
-    background: var(--accent-green, #00ff88);
+    background: var(--accent-green, var(--accent-green));
     box-shadow: 0 0 4px rgba(0, 255, 136, 0.4);
 }
 
@@ -499,11 +499,11 @@
 }
 
 .sys-disk-io-read {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .sys-disk-io-write {
-    color: var(--accent-green, #00ff88);
+    color: var(--accent-green, var(--accent-green));
 }
 
 /* Process grid — dot-matrix style */
@@ -533,7 +533,7 @@
 }
 
 .sys-process-dot.running {
-    background: var(--accent-green, #00ff88);
+    background: var(--accent-green, var(--accent-green));
     box-shadow: 0 0 4px rgba(0, 255, 136, 0.4);
 }
 
@@ -562,7 +562,7 @@
     padding: 2px 8px;
     background: transparent;
     border: 1px solid var(--border-color, #2a2a4a);
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     border-radius: 3px;
     cursor: pointer;
     text-transform: uppercase;
@@ -640,7 +640,7 @@
 
 /* Color-coded quick values */
 .sys-val-ok {
-    color: var(--accent-green, #00ff88) !important;
+    color: var(--accent-green, var(--accent-green)) !important;
 }
 
 .sys-val-warn {

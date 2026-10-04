@@ -29,12 +29,12 @@ body {
     font-size: 22px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
 }
 .pfd-sub { font-size: 11px; color: var(--text-dim, #8b97a6); font-family: var(--font-data, monospace); margin-top: 2px; }
 .pfd-squawk { text-align: center; }
-.pfd-squawk-val { font-family: var(--font-data, monospace); font-size: 24px; font-weight: 600; color: var(--accent-green, #00ff88); display: block; }
+.pfd-squawk-val { font-family: var(--font-data, monospace); font-size: 24px; font-weight: 600; color: var(--accent-green, var(--accent-green)); display: block; }
 .pfd-squawk-label { font-size: 9px; letter-spacing: 0.15em; color: var(--text-dim, #8b97a6); }
 .pfd-status { text-align: right; display: flex; flex-direction: column; gap: 2px; }
 .pfd-state {
@@ -43,7 +43,7 @@ body {
     padding: 2px 10px; border-radius: 3px; align-self: flex-end;
     border: 1px solid var(--border-color, #223); color: var(--text-dim, #8b97a6);
 }
-.pfd-state.live { color: var(--accent-green, #00ff88); border-color: var(--accent-green, #00ff88); }
+.pfd-state.live { color: var(--accent-green, var(--accent-green)); border-color: var(--accent-green, var(--accent-green)); }
 .pfd-state.nodata, .pfd-state:not(.live) { color: var(--accent-orange, #ffa500); border-color: var(--accent-orange, #ffa500); }
 .pfd-age { font-size: 10px; color: var(--text-dim, #8b97a6); }
 .pfd-ehs-badge {
@@ -78,7 +78,7 @@ body {
     margin-top: 6px;
     font-family: 'Orbitron', var(--font-sans);
     font-size: 10px; letter-spacing: 0.14em;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* Gauge primitives */
@@ -87,7 +87,7 @@ body {
 .inst-tick-minor { stroke: #556; stroke-width: 1; }
 .inst-tick-major { stroke: #aeb8c4; stroke-width: 2; }
 .inst-tick-label { fill: #cdd6e0; font-family: var(--font-data, monospace); font-size: 11px; }
-.inst-needle { stroke: var(--accent-cyan, #00d4ff); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.6)); transition: transform 0.5s ease-out; }
+.inst-needle { stroke: var(--accent-cyan, var(--accent-cyan)); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.6)); transition: transform 0.5s ease-out; }
 .inst-hub { fill: #cdd6e0; }
 .inst-digital { fill: #fff; font-family: var(--font-data, monospace); font-size: 20px; font-weight: 600; }
 .inst-unit { fill: var(--text-dim, #8b97a6); font-family: var(--font-data, monospace); font-size: 10px; letter-spacing: 0.08em; }
@@ -104,7 +104,7 @@ body {
 .data-block { justify-content: flex-start; align-items: stretch; padding: 14px; }
 .pfd-data-title {
     font-family: 'Orbitron', var(--font-sans);
-    font-size: 11px; letter-spacing: 0.14em; color: var(--accent-cyan, #00d4ff);
+    font-size: 11px; letter-spacing: 0.14em; color: var(--accent-cyan, var(--accent-cyan));
     margin-bottom: 10px; text-align: center;
 }
 .pfd-kv {

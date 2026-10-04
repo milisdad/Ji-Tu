@@ -1523,7 +1523,7 @@
     font-family: var(--font-mono);
     font-size: 14px;
     font-weight: 600;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .station-raw-modal-close {
@@ -1559,7 +1559,7 @@
     font-family: var(--font-data);
     font-size: 12px;
     line-height: 1.6;
-    color: var(--accent-green, #00ff88);
+    color: var(--accent-green, var(--accent-green));
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-color, #333);
     border-radius: 4px;
@@ -1593,7 +1593,7 @@
 }
 
 .station-raw-copy-btn:hover {
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, var(--accent-cyan));
     color: var(--text-inverse);
 }
 
@@ -1644,7 +1644,7 @@
 }
 
 .signal-card.signal-card-clickable:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
     box-shadow: 0 0 0 1px rgba(var(--accent-cyan-rgb), 0.2);
 }
 
@@ -1754,7 +1754,7 @@
     font-family: var(--font-mono);
     font-size: 15px;
     font-weight: 600;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .signal-details-modal-close {
@@ -1800,7 +1800,7 @@
 }
 
 .signal-details-copy-btn:hover {
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, var(--accent-cyan));
     color: var(--text-inverse);
 }
 

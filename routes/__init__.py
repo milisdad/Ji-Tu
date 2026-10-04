@@ -22,6 +22,7 @@ def register_blueprints(app):
     from .dsc import dsc_bp
     from .gps import gps_bp
     from .ground_station import ground_station_bp
+    from .jitu import jitu_bp  # Ji-Tu research exports
     from .listening_post import receiver_bp
     from .meshcore import meshcore_bp
     from .meshtastic import meshtastic_bp
@@ -97,6 +98,7 @@ def register_blueprints(app):
     app.register_blueprint(ground_station_bp)  # Ground station automation
     app.register_blueprint(drone_bp)  # Drone intelligence / UAV detection
     app.register_blueprint(observations_bp)  # Activity feed across modes
+    app.register_blueprint(jitu_bp)  # Ji-Tu research CSV export (E2/E3/E4)
 
     # Every blueprint here is a JSON API driven by fetch(), so none carries a
     # CSRF form token and all are exempt. The exemption is blanket on purpose:

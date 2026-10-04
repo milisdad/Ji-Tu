@@ -56,7 +56,7 @@
 .settings-header h2 .icon {
     width: 20px;
     height: 20px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .settings-close {
@@ -107,7 +107,7 @@
 }
 
 .settings-tab.active {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .settings-tab.active::after {
@@ -117,7 +117,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* Settings Sections */
@@ -260,8 +260,8 @@
 }
 
 .toggle-switch input:checked + .toggle-slider {
-    background-color: var(--accent-cyan, #00d4ff);
-    border-color: var(--accent-cyan, #00d4ff);
+    background-color: var(--accent-cyan, var(--accent-cyan));
+    border-color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
@@ -292,7 +292,7 @@
 
 .settings-select:focus {
     outline: none;
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* Text Input */
@@ -308,7 +308,7 @@
 
 .settings-input:focus {
     outline: none;
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .settings-input::placeholder {
@@ -347,7 +347,7 @@
 
 .asset-badge.available {
     background: rgba(0, 255, 136, 0.15);
-    color: var(--accent-green, #00ff88);
+    color: var(--accent-green, var(--accent-green));
 }
 
 .asset-badge.missing {
@@ -374,8 +374,8 @@
 }
 
 .check-assets-btn:hover {
-    border-color: var(--accent-cyan, #00d4ff);
-    color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .check-assets-btn:disabled {
@@ -412,7 +412,7 @@
 }
 
 .about-info a {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     text-decoration: none;
 }
 
@@ -422,7 +422,7 @@
 
 .about-version {
     font-family: var(--font-mono);
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* Donate Button */
@@ -475,7 +475,7 @@
 }
 
 .settings-info strong {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* Map tile variants — teal tint, skipped in lean mode */
@@ -585,8 +585,8 @@ html[data-ui-tier="enhanced"].map-cyber-enabled .leaflet-container::before {
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]).map-cyber-enabled .leaflet-container::after {
     background-image:
-        linear-gradient(rgba(46, 125, 138, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(46, 125, 138, 0.1) 1px, transparent 1px);
+        linear-gradient(rgba(47, 174, 110, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(47, 174, 110, 0.1) 1px, transparent 1px);
     background-size: 52px 52px, 52px 52px;
 }
 

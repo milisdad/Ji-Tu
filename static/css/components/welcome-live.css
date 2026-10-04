@@ -6,7 +6,7 @@
     border: 1px solid var(--border-color);
     border-left: 3px solid var(--accent-cyan);
     border-radius: 8px;
-    background: linear-gradient(180deg, rgba(var(--accent-cyan-rgb, 74, 163, 255), 0.06), transparent), var(--bg-card);
+    background: linear-gradient(180deg, rgba(var(--accent-cyan-rgb, 47, 174, 110), 0.06), transparent), var(--bg-card);
     display: flex;
     flex-direction: column;
     gap: 10px;

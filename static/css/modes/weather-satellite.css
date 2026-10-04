@@ -66,7 +66,7 @@
 
 .wxsat-strip-btn:hover {
     background: var(--bg-hover, #252a3a);
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .wxsat-strip-btn.stop {
@@ -104,7 +104,7 @@
 }
 
 .wxsat-strip-value.accent-cyan {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* ===== Timezone Select ===== */
@@ -120,7 +120,7 @@
 }
 
 .wxsat-tz-select:focus {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
     outline: none;
 }
 
@@ -167,7 +167,7 @@
 }
 
 .wxsat-loc-input:focus {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
     outline: none;
 }
 
@@ -264,7 +264,7 @@
 .wxsat-countdown-sat {
     font-size: 12px;
     font-weight: 600;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -376,7 +376,7 @@
 
 .wxsat-analysis-best {
     font-size: 11px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     white-space: nowrap;
 }
 
@@ -404,7 +404,7 @@
 }
 
 .wxsat-pass-direction .wxsat-dir-arrow {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     margin: 0 2px;
 }
 
@@ -520,7 +520,7 @@
 
 .wxsat-passes-count {
     font-size: 11px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -541,7 +541,7 @@
 }
 
 .wxsat-pass-card:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
     background: var(--bg-hover, #252a3a);
 }
 
@@ -670,7 +670,7 @@
 
 .wxsat-panel-subtitle {
     font-size: 10px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -803,7 +803,7 @@
 
 .wxsat-gallery-count {
     font-size: 11px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -828,7 +828,7 @@
 }
 
 .wxsat-image-card:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -892,7 +892,7 @@
 
 .wxsat-image-product {
     font-size: 10px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -989,7 +989,7 @@
 
 .wxsat-progress-bar .progress {
     height: 100%;
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, var(--accent-cyan));
     border-radius: 2px;
     transition: width 0.3s ease;
 }
@@ -1220,7 +1220,7 @@
 }
 
 .wxsat-phase-step.completed {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     border-color: rgba(var(--accent-cyan-rgb), 0.3);
     background: rgba(var(--accent-cyan-rgb), 0.05);
     opacity: 0.7;
@@ -1260,13 +1260,13 @@
 }
 
 .wxsat-console-filter:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
     color: var(--text-secondary, #999);
 }
 
 .wxsat-console-filter.active {
-    border-color: var(--accent-cyan, #00d4ff);
-    color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
+    color: var(--accent-cyan, var(--accent-cyan));
     background: rgba(var(--accent-cyan-rgb), 0.08);
 }
 
@@ -1337,8 +1337,8 @@
 }
 
 .wxsat-console-entry.wxsat-log-progress {
-    border-left-color: var(--accent-cyan, #00d4ff);
-    color: var(--accent-cyan, #00d4ff);
+    border-left-color: var(--accent-cyan, var(--accent-cyan));
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .wxsat-console-entry.wxsat-log-save {

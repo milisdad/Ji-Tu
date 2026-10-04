@@ -37,7 +37,7 @@
 }
 
 .device-card:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, var(--accent-cyan));
     box-shadow: 0 0 0 1px rgba(var(--accent-cyan-rgb), 0.2);
 }
 
@@ -72,7 +72,7 @@
 }
 
 .device-address .address-value {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 .device-address .address-type {
@@ -701,7 +701,7 @@
     font-family: var(--font-data);
     font-size: 36px;
     font-weight: 700;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
     line-height: 1;
 }
 
@@ -779,7 +779,7 @@
 
 .modal-info-grid .info-value.mono {
     font-family: var(--font-data);
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, var(--accent-cyan));
 }
 
 /* UUID List */

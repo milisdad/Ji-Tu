@@ -45,7 +45,7 @@
 .map-hud-count {
     font-size: 16px;
     font-weight: 600;
-    color: var(--accent-cyan, #4aa3ff);
+    color: var(--accent-cyan, #2fae6e);
     line-height: 1;
 }
 
@@ -133,7 +133,7 @@
 .map-graticule-btn.active {
     background: rgba(var(--accent-cyan-rgb, 74 163 255), 0.12);
     border-color: rgba(var(--accent-cyan-rgb, 74 163 255), 0.55);
-    color: var(--accent-cyan, #4aa3ff);
+    color: var(--accent-cyan, #2fae6e);
 }
 
 /* --- Dark glass popup ---

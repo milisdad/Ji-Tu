@@ -247,7 +247,7 @@ function toggleSection(el) {
 
 function toggleTheme() {
     const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme') || 'dark';
+    const currentTheme = html.getAttribute('data-theme') || 'light';
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     html.setAttribute('data-theme', newTheme);
     localStorage.setItem('intercept-theme', newTheme);
@@ -260,7 +260,7 @@ function toggleTheme() {
 }
 
 function loadTheme() {
-    const savedTheme = localStorage.getItem('intercept-theme') || 'dark';
+    const savedTheme = localStorage.getItem('intercept-theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     const btn = document.getElementById('themeToggle');
     if (btn) {

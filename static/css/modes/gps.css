@@ -50,7 +50,7 @@
 }
 
 .gps-status-dot.connected {
-    background: #00ff88;
+    background: var(--accent-green);
     box-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
 }
 
@@ -94,12 +94,12 @@
 
 .gps-fix-badge.fix-3d {
     background: rgba(0, 255, 136, 0.2);
-    color: #00ff88;
+    color: var(--accent-green);
     border: 1px solid rgba(0, 255, 136, 0.3);
 }
 
 /* DOP quality indicators */
-.gps-dop-good { color: #00ff88; }
+.gps-dop-good { color: var(--accent-green); }
 .gps-dop-moderate { color: #ffaa00; }
 .gps-dop-poor { color: #ff4444; }
 
@@ -365,7 +365,7 @@
 
 /* Constellation colors */
 .gps-const-gps { background-color: var(--accent-cyan); }
-.gps-const-glonass { background-color: #00ff88; }
+.gps-const-glonass { background-color: var(--accent-green); }
 .gps-const-galileo { background-color: #ff8800; }
 .gps-const-beidou { background-color: #ff4466; }
 .gps-const-sbas { background-color: #ffdd00; }
@@ -463,7 +463,7 @@
 }
 
 .gps-sky-toggle button.active {
-    background: var(--accent-cyan-dim, rgba(74, 163, 255, 0.15));
+    background: var(--accent-cyan-dim, rgba(47, 174, 110, 0.15));
     color: var(--accent-cyan);
 }
 

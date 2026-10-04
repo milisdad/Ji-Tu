@@ -748,7 +748,7 @@ const Settings = {
         // Theme select
         const themeSelect = document.getElementById('themeSelect');
         if (themeSelect) {
-            themeSelect.value = localStorage.getItem('intercept-theme') || 'dark';
+            themeSelect.value = localStorage.getItem('intercept-theme') || 'light';
         }
 
         const uiTierSelect = document.getElementById('uiTierSelect');

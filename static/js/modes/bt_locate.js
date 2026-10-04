@@ -1572,7 +1572,7 @@ const BtLocate = (function() {
 
         return (
             '<?xml version="1.0" encoding="UTF-8"?>' +
-            '<gpx version="1.1" creator="iNTERCEPT BT Locate" xmlns="http://www.topografix.com/GPX/1/1">' +
+            '<gpx version="1.1" creator="Ji-Tu BT Locate" xmlns="http://www.topografix.com/GPX/1/1">' +
             '<trk><name>BT Locate Trail</name><trkseg>' +
             trkPts +
             '</trkseg></trk>' +

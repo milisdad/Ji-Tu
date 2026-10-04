@@ -28,7 +28,7 @@
 
 .wfl-env-btn.active {
     background: rgba(0, 255, 136, 0.1);
-    border-color: var(--accent-green, #00ff88);
+    border-color: var(--accent-green, var(--accent-green));
     color: var(--text-primary);
 }
 
@@ -339,7 +339,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--accent-green, #00ff88);
+    color: var(--accent-green, var(--accent-green));
     background: rgba(0, 255, 136, 0.1);
     border: 1px solid rgba(0, 255, 136, 0.3);
     border-radius: 3px;
@@ -349,7 +349,7 @@
 
 .wfl-locate-btn:hover {
     background: rgba(0, 255, 136, 0.2);
-    border-color: var(--accent-green, #00ff88);
+    border-color: var(--accent-green, var(--accent-green));
 }
 
 .wfl-locate-btn svg {

@@ -389,7 +389,7 @@
 .wf-step-btn {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--accent-cyan, #4aa3ff);
+    color: var(--accent-cyan, #2fae6e);
     font-size: 14px;
     width: 28px;
     height: 28px;
@@ -433,7 +433,7 @@
     background: transparent;
     border: none;
     outline: none;
-    color: var(--accent-cyan, #4aa3ff);
+    color: var(--accent-cyan, #2fae6e);
     font-family: var(--font-mono, monospace);
     font-size: 17px;
     font-weight: 700;
@@ -752,7 +752,7 @@
     position: absolute;
     top: 4px;
     background: rgba(0, 0, 0, 0.84);
-    color: var(--accent-cyan, #4aa3ff);
+    color: var(--accent-cyan, #2fae6e);
     font-family: var(--font-mono, monospace);
     font-size: 11px;
     padding: 2px 7px;
@@ -1185,10 +1185,10 @@
 /* ---- Enhanced tier: replace blue palette with signals teal ---- */
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-container {
-    --wf-border: rgba(46, 125, 138, 0.22);
+    --wf-border: rgba(47, 174, 110, 0.22);
     --wf-surface: linear-gradient(180deg, rgba(2, 6, 6, 0.97) 0%, rgba(1, 3, 3, 0.98) 100%);
-    background: radial-gradient(circle at 14% -18%, rgba(46, 125, 138, 0.08) 0%, rgba(46, 125, 138, 0) 38%),
-        radial-gradient(circle at 86% -26%, rgba(46, 125, 138, 0.05) 0%, rgba(46, 125, 138, 0) 36%),
+    background: radial-gradient(circle at 14% -18%, rgba(47, 174, 110, 0.08) 0%, rgba(47, 174, 110, 0) 38%),
+        radial-gradient(circle at 86% -26%, rgba(47, 174, 110, 0.05) 0%, rgba(47, 174, 110, 0) 36%),
         #000202;
 }
 
@@ -1201,7 +1201,7 @@ html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-headline-tag {
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-rx-vfo {
-    border-color: rgba(46, 125, 138, 0.25);
+    border-color: rgba(47, 174, 110, 0.25);
     background: linear-gradient(180deg, rgba(3, 8, 8, 0.92) 0%, rgba(1, 4, 4, 0.95) 100%);
 }
 
@@ -1214,50 +1214,50 @@ html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-rx-vfo-readout {
 }
 
 html[data-ui-tier="enhanced"] #wfRxFreqReadout {
-    text-shadow: 0 0 16px rgba(46, 125, 138, 0.25);
+    text-shadow: 0 0 16px rgba(47, 174, 110, 0.25);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-rx-modebank {
-    border-color: rgba(46, 125, 138, 0.22);
+    border-color: rgba(47, 174, 110, 0.22);
     background: rgba(1, 4, 4, 0.86);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-mode-btn {
-    border-color: rgba(46, 125, 138, 0.24);
+    border-color: rgba(47, 174, 110, 0.24);
     background: linear-gradient(180deg, rgba(4, 8, 8, 0.95) 0%, rgba(2, 5, 5, 0.95) 100%);
     color: rgba(65, 175, 192, 0.90);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-mode-btn:hover {
-    border-color: rgba(46, 125, 138, 0.48);
+    border-color: rgba(47, 174, 110, 0.48);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-mode-btn.is-active,
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-mode-btn.active {
-    border-color: rgba(46, 125, 138, 0.62);
+    border-color: rgba(47, 174, 110, 0.62);
     background: linear-gradient(180deg, rgba(6, 16, 18, 0.92) 0%, rgba(4, 12, 14, 0.95) 100%);
     color: rgba(100, 210, 222, 0.96);
-    box-shadow: 0 0 14px rgba(46, 125, 138, 0.22);
+    box-shadow: 0 0 14px rgba(47, 174, 110, 0.22);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-rx-levels,
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-rx-meter-wrap,
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-rx-actions {
-    border-color: rgba(46, 125, 138, 0.20);
+    border-color: rgba(47, 174, 110, 0.20);
     background: rgba(1, 4, 4, 0.85);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-monitor-select {
-    border-color: rgba(46, 125, 138, 0.25);
+    border-color: rgba(47, 174, 110, 0.25);
     background: rgba(1, 3, 3, 0.8);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-rx-smeter-fill {
-    box-shadow: 0 0 10px rgba(46, 125, 138, 0.22);
+    box-shadow: 0 0 10px rgba(47, 174, 110, 0.22);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-monitor-btn-secondary {
-    border-color: rgba(46, 125, 138, 0.45);
+    border-color: rgba(47, 174, 110, 0.45);
     background: linear-gradient(180deg, rgba(4, 12, 14, 0.95) 0%, rgba(2, 8, 10, 0.95) 100%);
     color: rgba(80, 190, 205, 0.90);
 }
@@ -1267,7 +1267,7 @@ html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-freq-bar {
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-spectrum-canvas-wrap {
-    background: radial-gradient(circle at 50% -120%, rgba(46, 125, 138, 0.06) 0%, rgba(46, 125, 138, 0) 65%);
+    background: radial-gradient(circle at 50% -120%, rgba(47, 174, 110, 0.06) 0%, rgba(47, 174, 110, 0) 65%);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-band-strip {
@@ -1275,7 +1275,7 @@ html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-band-strip {
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-band-block {
-    border-color: rgba(46, 125, 138, 0.42);
+    border-color: rgba(47, 174, 110, 0.42);
     color: rgba(80, 190, 205, 0.92);
 }
 
@@ -1284,18 +1284,18 @@ html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-band-edge {
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-band-marker::before {
-    background: rgba(46, 125, 138, 0.58);
-    box-shadow: 0 0 5px rgba(46, 125, 138, 0.30);
+    background: rgba(47, 174, 110, 0.58);
+    box-shadow: 0 0 5px rgba(47, 174, 110, 0.30);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-band-marker-label {
-    border-color: rgba(46, 125, 138, 0.48);
+    border-color: rgba(47, 174, 110, 0.48);
     background: rgba(2, 5, 5, 0.95);
     color: rgba(80, 190, 205, 0.90);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-tune-line {
-    background: rgba(46, 125, 138, 0.72);
+    background: rgba(47, 174, 110, 0.72);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-freq-axis {
@@ -1304,18 +1304,18 @@ html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-freq-axis {
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-side .section.wf-side-hero {
     background: linear-gradient(180deg, rgba(3, 8, 8, 0.95) 0%, rgba(1, 4, 4, 0.97) 100%);
-    border-color: rgba(46, 125, 138, 0.30);
+    border-color: rgba(47, 174, 110, 0.30);
     box-shadow: 0 8px 24px rgba(0, 8, 10, 0.30), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-side-chip {
     color: rgba(65, 175, 192, 0.88);
-    border-color: rgba(46, 125, 138, 0.32);
+    border-color: rgba(47, 174, 110, 0.32);
     background: rgba(6, 16, 18, 0.30);
 }
 
 html[data-ui-tier="enhanced"]:not([data-theme="light"]) .wf-side-stat {
-    border-color: rgba(46, 125, 138, 0.20);
+    border-color: rgba(47, 174, 110, 0.20);
 }
 
 /* Idle note in the middle of the empty waterfall (a .map-waiting) */

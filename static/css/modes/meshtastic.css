@@ -298,7 +298,7 @@
 }
 
 .mesh-strip-btn.connect:hover {
-    background: var(--accent-cyan-bright, #00d4ff);
+    background: var(--accent-cyan-bright, var(--accent-cyan));
 }
 
 .mesh-strip-btn.disconnect {
@@ -486,7 +486,7 @@
 }
 
 .mesh-node-marker.local {
-    background: #00ff88;  /* Bright green for local node */
+    background: var(--accent-green);  /* Bright green for local node */
     box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.6),
         0 0 20px 8px rgba(0, 255, 136, 0.7),  /* Strong green glow */
