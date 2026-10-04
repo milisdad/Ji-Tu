@@ -46,6 +46,41 @@
 
 ---
 
+## Yang membedakan Ji-Tu: arsitektur agent-controller (implementasi Unjaya)
+
+Berbeda dari repo asli [smittix/intercept](https://github.com/smittix/intercept)
+yang umumnya dijalankan pada satu mesin, implementasi di Unjaya memisahkan
+**Agent** dan **Controller**:
+
+- **Agent** - Raspberry Pi dengan perangkat SDR (RTL-SDR, HackRF, Ubertooth,
+  WiFi, GPS) dan akses internet. Bisa **single-device** (mis. satu Pi khusus
+  RTL-SDR, satu Pi khusus HackRF) atau **multi-device**. Agent menangkap sinyal
+  dan mengirimkannya ke controller. Tiap agent otomatis melaporkan hanya mode
+  yang perangkatnya tersedia.
+- **Controller** - komputer/laptop berisi dashboard yang mengendalikan banyak
+  agent. Tidak memerlukan perangkat SDR lokal.
+- **ZeroTier** - overlay terenkripsi yang menghubungkan controller ke agent.
+
+Alur lima tahap: Sumber RF → Sensor (USB) → Agent (Raspberry Pi) → ZeroTier →
+Controller (laptop).
+
+Instalasi terpisah per peran (lihat [Deploy Topologi](docs/JI-TU-DEPLOY-TOPOLOGI.md)):
+
+```bash
+# Controller (laptop) - dashboard saja, tanpa tool SDR lokal
+./setup.sh --role=controller
+sudo ./start.sh
+
+# Agent (Raspberry Pi) - pilih single/multi perangkat
+./setup.sh --role=agent                        # interaktif
+./setup.sh --role=agent --device=rtlsdr        # satu perangkat
+./setup.sh --role=agent --device="rtlsdr gps"  # beberapa perangkat
+```
+
+Penyelarasan dengan studi SIGINT/OMSP Unjaya: [Ruang Lingkup](docs/JI-TU-RUANG-LINGKUP.md).
+
+---
+
 ## Fitur
 
 - **Dekode Pager** - POCSAG/FLEX via rtl_fm + multimon-ng
