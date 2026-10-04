@@ -22,4 +22,21 @@
             that period, and Map for the sightings that carry a position.
         </p>
     </div>
+
+    <div class="section">
+        <h3>Ekspor riset (CSV)</h3>
+        <p style="color: var(--text-secondary); font-size: 11px; line-height: 1.5; margin-bottom: 8px;">
+            Unduh observasi pada jendela waktu di atas sebagai CSV bertanda eksperimen
+            (analisis E2/E3/E4). Turunan jeda antarkedatangan dan laju pesan disertakan.
+        </p>
+        <label for="jituExpTag">Penanda eksperimen</label>
+        <input id="jituExpTag" type="text" placeholder="mis. E2" maxlength="32"
+               style="width:100%; box-sizing:border-box; margin:4px 0 10px; padding:6px 8px;
+                      background:var(--bg-tertiary); border:1px solid var(--border-color);
+                      border-radius:var(--radius-md); color:var(--text-primary);">
+        <button type="button" class="run-btn"
+                onclick="var t=(document.getElementById('jituExpTag').value||'').trim();var w=document.getElementById('activityWindow');var h=((parseFloat(w&&w.value)||60)/60);window.location.assign('/jitu/observations/export.csv?hours='+encodeURIComponent(h)+(t?'&exp='+encodeURIComponent(t):''));">
+            Unduh CSV
+        </button>
+    </div>
 </div>

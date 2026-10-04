@@ -130,3 +130,137 @@ def export_observations_csv() -> Response:
         mimetype="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{fname}"'},
     )
+
+
+# =============================================================================
+# Signal-characteristic measurements (parameters the observation store lacks)
+#
+# The observation store holds a sighting plus RSSI. The study also needs the
+# external transmission parameters that only specific producers can supply:
+# frequency offset (ppm, E1 calibration), bandwidth, duty cycle, burst duration.
+# This is their data path: any mode or an external calibration/anomaly script
+# POSTs a measurement, and the CSV export feeds analysis. No capture-path code
+# is edited here, so nothing is faked; producers hook in where the value exists.
+# =============================================================================
+
+_MEASURE_NUM = (
+    "freq_mhz", "ppm", "bandwidth_hz", "rssi_db", "snr_db", "duty_cycle", "burst_ms",
+)
+
+
+def _num(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _str_or_none(value, limit):
+    return str(value)[:limit] if value is not None else None
+
+
+def _ensure_measurements_table() -> None:
+    from utils.database import get_db
+
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS jitu_measurements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts REAL NOT NULL,
+                experiment TEXT, device TEXT, source TEXT,
+                freq_mhz REAL, ppm REAL, bandwidth_hz REAL,
+                rssi_db REAL, snr_db REAL, duty_cycle REAL, burst_ms REAL,
+                note TEXT
+            )
+            """
+        )
+
+
+@jitu_bp.route("/measurements", methods=["POST"])
+def add_measurement():
+    """Record one signal-characteristic measurement (JSON body).
+
+    Fields (all optional except that at least one numeric should be given):
+      experiment, device, source, note (text)
+      freq_mhz, ppm, bandwidth_hz, rssi_db, snr_db, duty_cycle, burst_ms (numeric)
+      ts (epoch seconds; defaults to now)
+    """
+    from utils.database import get_db
+
+    data = request.get_json(silent=True) or {}
+    row = {
+        "ts": _num(data.get("ts")) or time.time(),
+        "experiment": _clean_tag(data.get("experiment")),
+        "device": _str_or_none(data.get("device"), 64),
+        "source": _str_or_none(data.get("source"), 64),
+        "note": _str_or_none(data.get("note"), 200),
+    }
+    for k in _MEASURE_NUM:
+        row[k] = _num(data.get(k))
+
+    _ensure_measurements_table()
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO jitu_measurements "
+            "(ts, experiment, device, source, freq_mhz, ppm, bandwidth_hz, "
+            " rssi_db, snr_db, duty_cycle, burst_ms, note) VALUES "
+            "(:ts, :experiment, :device, :source, :freq_mhz, :ppm, :bandwidth_hz, "
+            " :rssi_db, :snr_db, :duty_cycle, :burst_ms, :note)",
+            row,
+        )
+    return {"status": "ok", "ts": row["ts"], "experiment": row["experiment"]}, 201
+
+
+@jitu_bp.route("/measurements/export.csv", methods=["GET"])
+def export_measurements_csv() -> Response:
+    """Export recorded measurements as CSV. Params: exp, since/until (epoch) or
+    hours (default 24)."""
+    from utils.database import get_db
+
+    exp = _clean_tag(request.args.get("exp"))
+    now = time.time()
+    try:
+        until = float(request.args["until"]) if request.args.get("until") else now
+    except (TypeError, ValueError):
+        until = now
+    if request.args.get("since"):
+        since = _num(request.args.get("since"))
+    else:
+        since = until - max(0.0, _num(request.args.get("hours")) or 24.0) * 3600.0
+
+    _ensure_measurements_table()
+    conds, params = ["ts >= ?", "ts <= ?"], [since if since is not None else 0.0, until]
+    if exp:
+        conds.append("experiment = ?")
+        params.append(exp)
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT ts, experiment, device, source, freq_mhz, ppm, bandwidth_hz, "
+            "rssi_db, snr_db, duty_cycle, burst_ms, note FROM jitu_measurements "
+            f"WHERE {' AND '.join(conds)} ORDER BY ts ASC",
+            params,
+        ).fetchall()
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        "ts_iso", "ts_epoch", "experiment", "device", "source", "freq_mhz", "ppm",
+        "bandwidth_hz", "rssi_db", "snr_db", "duty_cycle", "burst_ms", "note",
+    ])
+    for raw in rows:
+        r = dict(raw)
+        iso = datetime.fromtimestamp(r["ts"], tz=timezone.utc).isoformat()
+        writer.writerow([
+            iso, round(r["ts"], 3), r["experiment"], r["device"], r["source"],
+            r["freq_mhz"], r["ppm"], r["bandwidth_hz"], r["rssi_db"], r["snr_db"],
+            r["duty_cycle"], r["burst_ms"], r["note"],
+        ])
+
+    stamp = datetime.fromtimestamp(now, tz=timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    fname = f"jitu_measurements_{exp or 'all'}_{stamp}.csv"
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )

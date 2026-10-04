@@ -103,9 +103,17 @@ dapat dihitung objektif (jadwal emisi uji dibuat blind terhadap pengamat).
 plus turunan `inter_arrival_s` dan `group_msg_rate_per_min`. Melayani E2 langsung
 dan E3/E4 pada level event.
 
-**Belum (increment berikut):** parameter yang tidak ada di store observasi —
-penyimpangan frekuensi (ppm, E1), lebar pita, duty cycle, durasi burst — perlu
-instrumentasi per-mode (subghz/waterfall/kalibrasi). Sengaja tidak dipalsukan.
+**Jalur parameter tambahan:** parameter yang tidak ada di store observasi —
+penyimpangan frekuensi (ppm, E1), lebar pita, duty cycle, durasi burst — punya
+jalur data terstruktur: `POST /jitu/measurements` (JSON) untuk merekam dan
+`GET /jitu/measurements/export.csv` untuk mengekspor. Field: `experiment`,
+`device`, `source`, `freq_mhz`, `ppm`, `bandwidth_hz`, `rssi_db`, `snr_db`,
+`duty_cycle`, `burst_ms`, `note`. Mode atau skrip kalibrasi (E1)/anomali (E4)
+mengirim pengukuran ke sini; tombol ekspor observasi ada di mode Activity.
+
+**Belum:** produsen per-mode yang mengisi otomatis (mis. subghz untuk lebar pita,
+skrip kalibrasi untuk ppm) perlu di-wire di lingkungan nyata dengan perangkat.
+Sengaja tidak dipalsukan tanpa perangkat.
 
 ## 7. Keamanan dan kepatuhan
 
@@ -128,7 +136,7 @@ instrumentasi per-mode (subghz/waterfall/kalibrasi). Sengaja tidak dipalsukan.
 |---|---|---|
 | A | Dokumen scope ini | selesai |
 | B | Fokus modul UI (Bagian 3) | selesai — CSS fokus di `static/css/core/variables.css` |
-| C | Pencatatan & ekspor karakteristik sinyal (Bagian 6) | sebagian — ekspor CSV observasi selesai (`routes/jitu.py`); instrumentasi per-mode (ppm/lebar pita/duty/burst) belum |
+| C | Pencatatan & ekspor karakteristik sinyal (Bagian 6) | sebagian — ekspor CSV observasi + endpoint measurements + tombol ekspor UI selesai (`routes/jitu.py`, mode Activity); produsen per-mode otomatis belum (perlu perangkat) |
 | D | Panduan deploy topologi 5 tahap (Bagian 5) | selesai — [JI-TU-DEPLOY-TOPOLOGI.md](JI-TU-DEPLOY-TOPOLOGI.md) |
 
 Perubahan khusus fork dicatat di [../CHANGELOG.Ji-Tu.md](../CHANGELOG.Ji-Tu.md).

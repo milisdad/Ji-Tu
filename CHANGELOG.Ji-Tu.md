@@ -21,6 +21,10 @@ Basis fork: upstream `main` @ `7ff4f1d4`, di-fetch 2026-10-04.
 - Endpoint ekspor riset `GET /jitu/observations/export.csv` (`routes/jitu.py`):
   CSV observasi bertanda eksperimen dengan turunan jeda antarkedatangan dan laju
   pesan, dibangun di atas `utils/observations.py`.
+- Jalur pengukuran karakteristik sinyal: `POST /jitu/measurements` (tabel
+  `jitu_measurements`) dan `GET /jitu/measurements/export.csv` untuk parameter yang
+  tidak ada di store observasi (ppm/lebar pita/duty/burst) — untuk E1/E4.
+- Tombol "Unduh CSV" pada mode Activity untuk ekspor observasi dari UI.
 
 ### Changed
 - Rebrand visual ke Unjaya: logo header, dashboard, dan login memakai
