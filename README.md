@@ -283,14 +283,20 @@ Sebagian besar fitur bekerja dengan dongle RTL-SDR dasar (RTL2832U + R820T2).
 
 ## Dokumentasi
 
-- [Panduan Penggunaan](docs/USAGE.md) - Instruksi rinci tiap mode
-- [Panduan Perangkat Keras](docs/HARDWARE.md) - Perangkat SDR, instalasi manual, dan setup lanjutan
-- [Pemecahan Masalah](docs/TROUBLESHOOTING.md) - Masalah umum dan solusinya
-- [Agent Terdistribusi](docs/DISTRIBUTED_AGENTS.md) - Deployment node sensor jarak jauh
-- [Webhook](docs/WEBHOOKS.md) - Aturan peringatan dan integrasi webhook
-- [Keamanan](docs/SECURITY.md) - Keamanan jaringan dan praktik terbaik
-- [Ruang Lingkup Ji-Tu](docs/JI-TU-RUANG-LINGKUP.md) - Penyelarasan dengan studi SIGINT/OMSP
-- [Deploy Topologi Ji-Tu](docs/JI-TU-DEPLOY-TOPOLOGI.md) - Topologi 5 tahap (agent + ZeroTier + controller)
+**Panduan Unjaya (Bahasa Indonesia):**
+
+- [Panduan Unjaya (Agent-Controller)](docs/PANDUAN-UNJAYA.md) - tutorial menyeluruh end-to-end: controller, ZeroTier, agent single/multi perangkat, operasi dashboard, ekspor data
+- [Ruang Lingkup Ji-Tu](docs/JI-TU-RUANG-LINGKUP.md) - penyelarasan dengan studi SIGINT/OMSP
+- [Deploy Topologi Ji-Tu](docs/JI-TU-DEPLOY-TOPOLOGI.md) - topologi 5 tahap (agent + ZeroTier + controller)
+
+**Referensi upstream (bahasa Inggris, bawaan iNTERCEPT):**
+
+- [Usage Guide](docs/USAGE.md) - mekanik rinci tiap mode
+- [Hardware Guide](docs/HARDWARE.md) - perangkat SDR, instalasi manual
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - masalah umum dan solusinya
+- [Distributed Agents](docs/DISTRIBUTED_AGENTS.md) - arsitektur agent (teknis)
+- [Webhooks](docs/WEBHOOKS.md) - aturan peringatan dan integrasi webhook
+- [Security](docs/SECURITY.md) - keamanan jaringan dan praktik terbaik
 
 ---
 

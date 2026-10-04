@@ -30,6 +30,12 @@ Basis fork: upstream `main` @ `7ff4f1d4`, di-fetch 2026-10-04.
   (`--device=rtlsdr|hackrf|ubertooth|wifi|gps`), environment agent lean via
   `requirements-agent.txt` (tanpa Flask), dan service systemd `ji-tu-agent`.
   Aditif: alur instalasi default tidak berubah.
+- Tutorial menyeluruh berbahasa Indonesia `docs/PANDUAN-UNJAYA.md` untuk alur
+  agent-controller Unjaya (controller, ZeroTier, agent single/multi perangkat,
+  registrasi, operasi dashboard, ekspor data E1-E5, keamanan, pemecahan masalah).
+- README: bagian Dokumentasi dipisah menjadi Panduan Unjaya (Indonesia) dan
+  Referensi upstream (Inggris); About repo GitHub diperbarui ke Ji-Tu/Unjaya
+  (deskripsi, homepage, topik).
 
 ### Changed
 - Rebrand visual ke Unjaya: logo header, dashboard, dan login memakai
