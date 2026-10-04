@@ -1,12 +1,12 @@
 {
-  "name": "INTERCEPT Signal Intelligence",
-  "short_name": "INTERCEPT",
-  "description": "Unified SIGINT platform for software-defined radio analysis",
+  "name": "Ji-Tu (Powered by iNTERCEPT)",
+  "short_name": "Ji-Tu",
+  "description": "Ji-Tu (Powered by iNTERCEPT) - platform SIGINT berbasis software-defined radio",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0b1118",
-  "theme_color": "#0b1118",
+  "theme_color": "#006030",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",

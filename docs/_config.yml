@@ -1,7 +1,7 @@
-title: iNTERCEPT
-description: Signal Intelligence Platform - A web-based interface for software-defined radio tools
-url: https://smittix.github.io
-baseurl: /intercept
+title: Ji-Tu
+description: Ji-Tu (Powered by iNTERCEPT) - platform SIGINT berbasis software-defined radio
+url: https://milisdad.github.io
+baseurl: /Ji-Tu
 
 # Build settings
 include:

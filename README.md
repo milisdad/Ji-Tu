@@ -1,6 +1,5 @@
-<p align="center">
-  <img src="static/images/readme-banner.svg" alt="iNTERCEPT — Signal Intelligence Platform" width="100%">
-</p>
+<h1 align="center">Ji-Tu</h1>
+<p align="center"><em>Powered by iNTERCEPT</em></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python 3.9+">
@@ -16,7 +15,7 @@ Support the developer of this open-source project
   <a href="https://www.buymeacoffee.com/smittix" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 </p>
 <p align="center">
-  <strong>Signal Intelligence Platform</strong><br>
+  <strong>Ji-Tu (Powered by iNTERCEPT)</strong> - Signal Intelligence Platform<br>
   A web-based interface for software-defined radio tools.
 </p>
 
