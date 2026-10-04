@@ -3,24 +3,25 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python 3.9+">
-  <img src="https://img.shields.io/badge/license-Apache--2.0-green.svg" alt="Apache 2.0 License">
+  <img src="https://img.shields.io/badge/license-Apache--2.0-green.svg" alt="Lisensi Apache 2.0">
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg" alt="Platform">
 </p>
 
 <p align="center">
-Support the developer of this open-source project
+  <strong>Ji-Tu (Powered by iNTERCEPT)</strong> - Platform Signal Intelligence<br>
+  Antarmuka berbasis web untuk perangkat software-defined radio (SDR).
+</p>
+
+<p align="center">
+  <img src="docs/images/intercept-main.png" alt="Tangkapan layar Ji-Tu">
+</p>
+
+<p align="center">
+  Dukung pengembang proyek aslinya (iNTERCEPT)
 </p>
 
 <p align="center">
   <a href="https://www.buymeacoffee.com/smittix" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
-</p>
-<p align="center">
-  <strong>Ji-Tu (Powered by iNTERCEPT)</strong> - Signal Intelligence Platform<br>
-  A web-based interface for software-defined radio tools.
-</p>
-
-<p align="center">
-  <img src="docs/images/intercept-main.png" alt="Screenshot">
 </p>
 
 ---
