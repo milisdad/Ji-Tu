@@ -11,6 +11,11 @@ Basis fork: upstream `main` @ `7ff4f1d4`, di-fetch 2026-10-04.
 
 ### Added
 - Inisialisasi fork Ji-Tu dari `smittix/intercept`.
+- Sinkronisasi upstream iNTERCEPT **v2.33.79** (Meshtastic node actions, ISS SSTV
+  freq, fix ACARS/VDL2 macOS) via merge. Konten baru diselaraskan ke standar
+  Ji-Tu (brand, palet hijau termasuk aksen inline network_monitor, tema default
+  light); versi `pyproject.toml` disamakan ke 2.33.79. Dilakukan di clone dev +
+  push; mesin deployment tidak disentuh (update via tag saat maintenance).
 - Blok atribusi fork pada `README.md` (sesuai Pasal 4 Apache-2.0).
 - Dokumen ruang lingkup `docs/JI-TU-RUANG-LINGKUP.md` yang menyelaraskan Ji-Tu
   dengan dokumen penelitian SIGINT/OMSP (modul, parameter sinyal, eksperimen E1-E5).

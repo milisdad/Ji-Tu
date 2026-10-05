@@ -1613,7 +1613,7 @@ ACARS: ${r.statistics.acarsMessages} messages`;
                 const label = L.marker([labelLat, observerLocation.lon], {
                     icon: L.divIcon({
                         className: 'range-label',
-                        html: `<span style="color: #4a9eff; font-size: 10px; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 2px;">${Math.round(nm)} nm</span>`,
+                        html: `<span style="color: #2fae6e; font-size: 10px; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 2px;">${Math.round(nm)} nm</span>`,
                         iconSize: [40, 12],
                         iconAnchor: [20, 6]
                     })
@@ -2267,7 +2267,7 @@ ACARS: ${r.statistics.acarsMessages} messages`;
 
             if (window.ReceptionOutline) {
                 receptionOutline = ReceptionOutline.create(radarMap, {
-                    key: 'adsb', observer: () => observerLocation, color: '#4a9eff',
+                    key: 'adsb', observer: () => observerLocation, color: '#2fae6e',
                     visible: document.getElementById('showReach')?.checked !== false,
                 });
             }

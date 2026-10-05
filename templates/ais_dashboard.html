@@ -840,7 +840,7 @@
                         trailLines[mmsi].setLatLngs(points);
                     } else {
                         trailLines[mmsi] = L.polyline(points, {
-                            color: '#4a9eff',
+                            color: '#2fae6e',
                             weight: 2,
                             opacity: 0.5
                         }).addTo(vesselMap);
@@ -1493,7 +1493,7 @@
 
             // Create marker with distress icon
             const isDistress = data.category === 'DISTRESS';
-            const color = isDistress ? '#ef4444' : (data.category === 'URGENCY' ? '#f59e0b' : '#4a9eff');
+            const color = isDistress ? '#ef4444' : (data.category === 'URGENCY' ? '#f59e0b' : '#2fae6e');
 
             const icon = L.divIcon({
                 className: 'dsc-marker',
