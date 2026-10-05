@@ -83,34 +83,50 @@ Penyelarasan dengan studi SIGINT/OMSP Unjaya: [Ruang Lingkup](docs/JI-TU-RUANG-L
 
 ## Fitur
 
-- **Dekode Pager** - POCSAG/FLEX via rtl_fm + multimon-ng
-- **Sensor 433MHz** - Stasiun cuaca, TPMS, perangkat IoT via rtl_433
-- **Penganalisis Sub-GHz** - Perekaman RF dan dekode protokol untuk pita ISM 300-928 MHz via HackRF
-- **Pelacakan Pesawat** - ADS-B via dump1090 dengan peta dan radar real-time
-- **Pelacakan Kapal** - Pelacakan kapal AIS dengan pemantauan marabahaya VHF DSC
-- **Pesan ACARS** - Pesan datalink pesawat via acarsdec
-- **VDL2** - Dekode datalink pesawat VHF Data Link Mode 2 via dumpvdl2
-- **Listening Post** - Pemindai frekuensi wideband dengan pemantauan audio real-time
-- **Satelit Cuaca** - Dekode citra NOAA APT dan Meteor LRPT via SatDump dengan penjadwal otomatis
-- **WebSDR** - Mendengarkan HF/gelombang pendek jarak jauh via jaringan KiwiSDR
-- **ISS SSTV** - Penerimaan citra slow-scan TV dari International Space Station
-- **HF SSTV** - SSTV terestrial pada frekuensi gelombang pendek (80m-10m, VHF, UHF)
-- **APRS** - Laporan posisi dan telemetri radio paket amatir via direwolf
-- **Pelacakan Satelit** - Prediksi lintasan dengan polar plot dan peta ground track
-- **Meter Utilitas** - Pembacaan meter listrik, gas, dan air via rtlamr
-- **Riwayat ADS-B** - Riwayat pesawat persisten dengan dashboard pelaporan (Postgres opsional)
-- **Pemindaian WiFi** - Pengintaian mode monitor via aircrack-ng
-- **Pemindaian Bluetooth** - Penemuan perangkat dan deteksi tracker (dengan dukungan Ubertooth)
-- **BT Locate** - Pelokasian perangkat Bluetooth SAR dengan pemetaan jejak sinyal bertanda GPS dan peringatan kedekatan
-- **WiFi Locate** - Lokasikan titik akses WiFi berdasarkan BSSID dengan meter sinyal real-time, estimasi jarak, dan audio kedekatan
-- **GPS** - Pelacakan posisi GPS real-time dengan peta langsung, kecepatan, ketinggian, dan info satelit
-- **TSCM** - Kontra-surveilans dengan perbandingan baseline RF dan deteksi ancaman
-- **Meshtastic** - Integrasi jaringan mesh LoRa
-- **Cuaca Antariksa** - Data surya dan geomagnetik real-time dari NOAA SWPC, NASA SDO, dan HamQSL (tanpa SDR)
-- **Spy Stations** - Basis data number station dan jaringan HF diplomatik
-- **Remote Agents** - SIGINT terdistribusi dengan node sensor jarak jauh
-- **Mode Offline** - Aset terbundel untuk deployment air-gapped/lapangan
-- **Drone Intelligence** - Deteksi UAV multi-vektor via ASTM F3411 Remote ID (WiFi/BLE), RF RTL-SDR 433/868 MHz, dan sweep HackRF 2.4/5.8 GHz dengan peta kontak langsung dan skor risiko
+Fitur yang aktif bergantung pada perangkat yang terpasang di agent. Set perangkat implementasi Unjaya: **RTL-SDR, HackRF, WiFi Alfa, Ubertooth One, dan GPS**. Agent otomatis melaporkan hanya mode yang perangkatnya tersedia.
+
+### RTL-SDR (24-1766 MHz, receive-only)
+
+- **ADS-B** (pelacakan pesawat, dump1090), **AIS** + **DSC** (kapal + marabahaya VHF)
+- **ACARS** dan **VDL2** (datalink pesawat)
+- **Pager** POCSAG/FLEX, **Sensor 433MHz** (rtl_433), **Meter utilitas** (rtlamr)
+- **APRS** (radio paket amatir)
+- **Listening Post** (pemindai frekuensi + audio real-time)
+- **Radiosonde**, **Satelit cuaca NOAA APT**, **ISS SSTV**, pelacakan satelit
+
+### HackRF (1 MHz-6 GHz)
+
+- **Sub-GHz Analyzer** (ISM 300-928 MHz): perekaman RF + dekode protokol
+- **Sweep drone 2.4/5.8 GHz** (band di luar jangkauan RTL-SDR)
+- Spektrum / Listening Post wideband hingga 6 GHz
+
+### WiFi Alfa (mode monitor)
+
+- **Pemindaian WiFi** (aircrack-ng): AP, klien, deteksi deauth
+- **WiFi Locate** (lokasikan AP via BSSID, estimasi jarak)
+- **Remote ID drone via WiFi** (ASTM F3411)
+
+### Ubertooth One
+
+- Sniffing **Bluetooth Classic + BLE**
+- **BT Locate** (lacak perangkat Bluetooth, jejak bertanda GPS)
+
+### GPS
+
+- Posisi/waktu real-time untuk peta, geofencing, dan penandaan GPS pada jejak sinyal
+
+### Fitur gabungan (multi-perangkat)
+
+- **Drone Intelligence** - deteksi UAV multi-vektor: Remote ID WiFi/BLE + RF RTL-SDR 433/868 MHz + sweep HackRF 2.4/5.8 GHz, dengan peta kontak + skor risiko
+- **TSCM** - kontra-surveilans: baseline RF + WiFi + Bluetooth untuk deteksi perangkat mencurigakan
+
+### Platform
+
+- **Agent-Controller** - SIGINT terdistribusi via ZeroTier (lihat bagian di atas)
+- **Ekspor data riset** - observasi + karakteristik sinyal (CSV) untuk studi SIGINT/OMSP (`/jitu/observations/export.csv`, `/jitu/measurements`)
+- **Riwayat ADS-B** (Postgres opsional), **Mode Offline** (deployment lapangan)
+
+> Mode upstream lain (WebSDR, HF SSTV, Meshtastic, Spy Stations, Cuaca Antariksa, Meteor LRPT) tetap ada di kode tetapi di luar fokus perangkat Unjaya, jadi disembunyikan secara default.
 
 ---
 
@@ -256,14 +272,17 @@ Untuk menentukan sendiri di awal, setel `INTERCEPT_ADMIN_PASSWORD` sebelum start
 
 ## Kebutuhan Perangkat Keras
 
-| Perangkat | Fungsi | Harga |
-|-----------|--------|-------|
-| **RTL-SDR** | Wajib untuk semua fitur SDR | ~$25-35 |
-| **Adapter WiFi** | Harus mendukung mode promiscuous (monitor) | ~$20-40 |
-| **Adapter Bluetooth** | Pemindaian perangkat (umumnya bawaan) | - |
-| **GPS** | Unit GPS apa pun yang didukung Linux | ~$10 |
+| Perangkat | Fungsi | Rentang / Catatan |
+|---|---|---|
+| **RTL-SDR** (RTL2832U + R820T2) | ADS-B, AIS, 433MHz, pager, APRS, satelit | 24-1766 MHz, receive-only |
+| **HackRF One** | SubGHz, sweep drone 2.4/5.8 GHz, spektrum wideband | 1 MHz-6 GHz |
+| **Adapter WiFi (Alfa)** | Pemindaian WiFi, WiFi Locate, Remote ID drone | wajib mode monitor |
+| **Ubertooth One** | Sniffing Bluetooth/BLE, BT Locate, TSCM | - |
+| **GPS** (USB, gpsd) | Posisi/waktu real-time, penandaan GPS | - |
+| **Agent** (Raspberry Pi) | node sensor: akuisisi + pemrosesan | butuh akses internet |
+| **Controller** (laptop/PC) | dashboard + kendali agent | tanpa SDR lokal |
 
-Sebagian besar fitur bekerja dengan dongle RTL-SDR dasar (RTL2832U + R820T2).
+> :exclamation: **Tip daya USB (penting di lapangan):** beberapa SDR pada satu Raspberry Pi mudah melampaui anggaran daya USB. Gunakan **USB hub bertenaga (powered hub)** dan **kabel data berkualitas** untuk HackRF/RTL-SDR agar perangkat ter-enumerasi stabil. Kabel charge-only membuat perangkat gagal terbaca meski LED menyala.
 
 > :exclamation: **Tidak memakai perangkat RTL-SDR?**
 > Ji-Tu mendukung perangkat apa pun yang didukung SoapySDR. Namun Anda harus memasang modul yang sesuai untuk perangkat Anda. Misalnya untuk perangkat SDRplay, pasang `soapysdr-module-sdrplay`.
