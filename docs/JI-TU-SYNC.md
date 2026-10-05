@@ -109,7 +109,7 @@ setsid bash -lc "sudo ./start.sh > ~/jitu-ctrl-run.log 2>&1" </dev/null >/dev/nu
 ```
 
 Aman karena state tidak ikut ter-update:
-- `intercept_agent.cfg` di-`git update-index --assume-unchanged` (konfig lokal tak tertimpa),
+- konfig live agent ada di `~/intercept_agent.cfg` (DI LUAR repo), jadi `checkout`/`pull` tidak menyentuhnya (service menunjuk ke path eksternal ini; dibuat otomatis oleh `setup.sh --role=agent`),
 - `.env`, `instance/` (DB + password), `venv/` di-gitignore,
 - agent punya systemd `Restart=on-failure`; downtime hanya sepersekian menit.
 

@@ -3053,6 +3053,11 @@ install_agent_service() {
     return 0
   fi
   local dir; dir="$(pwd)"
+  # Konfig live disimpan DI LUAR repo agar update (git checkout/pull) bebas konflik.
+  local cfg="${JITU_AGENT_CONFIG:-$HOME/intercept_agent.cfg}"
+  if [[ ! -f "$cfg" ]]; then
+    cp "${dir}/intercept_agent.cfg" "$cfg" && ok "Konfig agent dibuat: $cfg (sunting file ini, bukan yang di repo)"
+  fi
   $SUDO tee /etc/systemd/system/ji-tu-agent.service >/dev/null <<EOF
 [Unit]
 Description=Ji-Tu Agent (Powered by iNTERCEPT) - node sensor SIGINT
@@ -3063,7 +3068,7 @@ Wants=network-online.target
 Type=simple
 User=root
 WorkingDirectory=${dir}
-ExecStart=${dir}/venv/bin/python ${dir}/intercept_agent.py --config ${dir}/intercept_agent.cfg
+ExecStart=${dir}/venv/bin/python ${dir}/intercept_agent.py --config ${cfg}
 Restart=on-failure
 RestartSec=5
 
@@ -3096,8 +3101,8 @@ do_role_install() {
       install_agent_service
       echo
       ok "Agent siap."
-      echo "  1) Salin & sunting intercept_agent.cfg (name, controller.url ZeroTier, api_key, push_enabled=true)"
-      echo "  2) Jalankan: venv/bin/python intercept_agent.py --config intercept_agent.cfg"
+      echo "  1) Sunting konfig di ~/intercept_agent.cfg (DI LUAR repo; name, controller.url ZeroTier, api_key, push_enabled=true)"
+      echo "  2) Jalankan: venv/bin/python intercept_agent.py --config ~/intercept_agent.cfg"
       echo "     atau via service: sudo systemctl start ji-tu-agent"
       ;;
     *)
