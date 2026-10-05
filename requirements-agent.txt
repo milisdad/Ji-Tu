@@ -6,6 +6,9 @@
 # Komunikasi ke controller (wajib)
 requests>=2.28.0
 
+# Dipakai utility deteksi SDR agent (mis. secure_filename); wajib meski tanpa web server
+Werkzeug>=3.1.5
+
 # DSP untuk dekode (ADS-B/DSC/SSTV/SubGHz) dan analisis TSCM
 numpy>=1.24.0
 scipy>=1.10.0

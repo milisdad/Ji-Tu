@@ -100,7 +100,7 @@ Konfigurasikan `intercept_agent.cfg`:
 [agent]
 name = pi-rtlsdr-1            # nama unik tiap node
 port = 8020
-allowed_ips = 10.244.0.0/16  # batasi ke subnet ZeroTier saja
+allowed_ips = 10.141.41.23   # IP PERSIS controller (pencocokan eksak, BUKAN CIDR; pisah koma untuk beberapa). Kosongkan = izinkan semua
 
 [controller]
 url = http://10.244.0.10:5050   # IP ZeroTier controller
@@ -155,7 +155,7 @@ Beri `exp` berbeda tiap eksperimen agar mudah dipisah saat analisis.
 ## 9. Keamanan
 
 - Isi `api_key` tiap agent; controller memaksa autentikasi pada `/controller/*`.
-- `allowed_ips` agent dibatasi ke subnet ZeroTier; jangan aktifkan `allow_cors`
+- `allowed_ips` agent diisi IP persis controller (eksak, bukan CIDR); jangan aktifkan `allow_cors`
   tanpa alasan.
 - Ganti kata sandi `admin` controller; jangan pakai default.
 - Jangan ekspos port 8020/5050 ke internet; akses hanya lewat overlay ZeroTier.

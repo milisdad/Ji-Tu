@@ -49,7 +49,7 @@ Lalu konfigurasikan agent:
 
 1. Salin `intercept_agent.cfg`, sesuaikan:
    - `[agent] name` = nama node (mis. `pi-perimeter-1`), `port = 8020`.
-   - `[agent] allowed_ips` = batasi ke rentang ZeroTier saja (lihat Bagian 4).
+   - `[agent] allowed_ips` = IP **persis** controller (pencocokan eksak, bukan CIDR; pisah koma untuk beberapa), atau kosongkan untuk izinkan semua peer overlay.
    - `[controller] url` = `http://<ip-zerotier-controller>:5050`.
    - `[controller] api_key` = kunci rahasia bersama (wajib diisi, lihat Keamanan).
    - `[controller] push_enabled = true`, `push_interval` sesuai kebutuhan.
