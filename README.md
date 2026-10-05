@@ -307,6 +307,7 @@ Untuk menentukan sendiri di awal, setel `INTERCEPT_ADMIN_PASSWORD` sebelum start
 - [Panduan Unjaya (Agent-Controller)](docs/PANDUAN-UNJAYA.md) - tutorial menyeluruh end-to-end: controller, ZeroTier, agent single/multi perangkat, operasi dashboard, ekspor data
 - [Ruang Lingkup Ji-Tu](docs/JI-TU-RUANG-LINGKUP.md) - penyelarasan dengan studi SIGINT/OMSP
 - [Deploy Topologi Ji-Tu](docs/JI-TU-DEPLOY-TOPOLOGI.md) - topologi 5 tahap (agent + ZeroTier + controller)
+- [Sinkronisasi Upstream](docs/JI-TU-SYNC.md) - jaga Ji-Tu selaras dengan iNTERCEPT + update deployment via tag (`scripts/sync-upstream.sh`)
 
 **Referensi upstream (bahasa Inggris, bawaan iNTERCEPT):**
 
