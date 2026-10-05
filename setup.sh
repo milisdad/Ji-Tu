@@ -3008,8 +3008,8 @@ agent_install_device_tools() {
         install_tool_multimon_ng
         ;;
       hackrf)    install_tool_hackrf; install_tool_soapysdr ;;
-      ubertooth) install_tool_bluez; install_tool_ubertooth ;;
-      wifi)      install_tool_aircrack_ng ;;
+      ubertooth) install_tool_bluez; apt_install libubertooth-dev ubertooth || install_ubertooth_from_source_debian ;;
+      wifi)      install_tool_aircrack_ng; apt_install iw || true ;;
       gps)       install_tool_gpsd ;;
       "")        : ;;
       *)         warn "Perangkat tak dikenal: '$d' (lewati)" ;;
