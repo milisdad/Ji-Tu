@@ -41,7 +41,10 @@ TOTAL_STEPS=0
 progress() {
   local msg="$1"
   ((CURRENT_STEP++)) || true
-  local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+  local pct=0
+  if (( TOTAL_STEPS > 0 )); then
+    pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+  fi
   local filled=$((pct / 5))
   local empty=$((20 - filled))
   local bar=$(printf '█%.0s' $(seq 1 $filled 2>/dev/null) || true)
