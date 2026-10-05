@@ -604,6 +604,7 @@ def index() -> str:
         "rtlamr": check_tool("rtlamr"),
     }
     devices = describe_devices(SDRFactory.detect_devices())
+    devices.extend(_remote_agent_sdr_devices())
     return render_template(
         "index.html",
         tools=tools,
@@ -633,10 +634,49 @@ def pwa_manifest() -> Response:
     return send_from_directory("static", "manifest.json", mimetype="application/manifest+json")
 
 
+def _remote_agent_sdr_devices() -> list:
+    """SDR devices reported by registered remote agents, tagged per agent.
+
+    So the controller's device list shows hardware attached to agents, not only
+    local SDRs (a headless controller has none). Tries a live fetch of each
+    active agent's /capabilities, falling back to the devices stored at
+    registration. Tolerant of unreachable agents.
+    """
+    out: list = []
+    try:
+        from utils.agent_client import AgentClient
+        from utils.database import get_agent_api_key, list_agents
+    except Exception:
+        return out
+    try:
+        agents = list_agents(active_only=True)
+    except Exception:
+        return out
+    for ag in agents:
+        devs = []
+        try:
+            client = AgentClient(ag["base_url"], api_key=get_agent_api_key(ag["id"]), timeout=3)
+            devs = client.get_capabilities().get("devices") or []
+        except Exception:
+            devs = (ag.get("interfaces") or {}).get("devices") or []
+        for d in devs:
+            dev = dict(d)
+            dev["is_remote"] = True
+            dev["agent"] = ag.get("name")
+            dev["agent_id"] = ag.get("id")
+            dev["agent_base_url"] = ag.get("base_url")
+            base = dev.get("display_name") or dev.get("name") or dev.get("sdr_type") or "SDR"
+            dev["display_name"] = f"[{ag.get('name')}] {base}"
+            out.append(dev)
+    return out
+
+
 @app.route("/devices")
 def get_devices() -> Response:
-    """Get all detected SDR devices with hardware type info."""
-    return jsonify(describe_devices(SDRFactory.detect_devices()))
+    """Get all detected SDR devices (local + remote agents) with hardware type info."""
+    devices = describe_devices(SDRFactory.detect_devices())
+    devices.extend(_remote_agent_sdr_devices())
+    return jsonify(devices)
 
 
 _NOTE_PROTOCOLS = {"bluetooth", "wifi", "rf", "adsb", "ais", "dsc", "aprs", "meshtastic", "meshcore", "other"}
