@@ -1426,7 +1426,7 @@ const SubGhz = (function() {
         showConsole();
         addConsoleEntry(logMessage || 'Preparing transmission...', logLevel || 'warn');
 
-        fetch('/subghz/transmit', {
+        fetch(subghzApi('/subghz/transmit'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -1583,7 +1583,7 @@ const SubGhz = (function() {
     }
 
     function stopTx() {
-        fetch('/subghz/transmit/stop', { method: 'POST' })
+        fetch(subghzApi('/subghz/transmit/stop'), { method: 'POST' })
             .then(r => r.json())
             .then(() => {
                 finalizeTxUi('Transmission stopped');

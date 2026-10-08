@@ -3959,6 +3959,30 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    def _subghz_transmit(self, body: dict) -> dict:
+        try:
+            cid = body.get("capture_id")
+            if not cid:
+                return {"status": "error", "message": "capture_id required"}
+            kwargs = {"capture_id": str(cid)}
+            for k in ("tx_gain", "max_duration"):
+                if body.get(k) is not None:
+                    kwargs[k] = int(body[k])
+            for k in ("start_seconds", "duration_seconds"):
+                if body.get(k) is not None:
+                    kwargs[k] = float(body[k])
+            if body.get("device_serial"):
+                kwargs["device_serial"] = str(body["device_serial"])
+            return self._subghz_mgr().transmit(**kwargs)
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _subghz_transmit_stop(self) -> dict:
+        try:
+            return self._subghz_mgr().stop_transmit()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     def _subghz_capture_get(self, cid: str) -> dict:
         try:
             c = self._subghz_mgr().get_capture(cid)
@@ -4146,6 +4170,13 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
 
         elif path == "/subghz/receive/stop":
             self._send_json(self._subghz_receive_stop())
+
+        elif path == "/subghz/transmit":
+            result = self._subghz_transmit(body)
+            self._send_json(result, 200 if result.get("status") != "error" else 400)
+
+        elif path == "/subghz/transmit/stop":
+            self._send_json(self._subghz_transmit_stop())
 
         elif path.startswith("/subghz/captures/") and path.endswith("/trim"):
             cid = path[len("/subghz/captures/"):-len("/trim")]
