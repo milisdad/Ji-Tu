@@ -138,6 +138,26 @@ perangkatnya ada. Pantau semua agent di **`/controller/monitor`**.
   ADS-B di `pi-rtlsdr-1`, sweep drone di `pi-hackrf-1`).
 - Data dari semua agent teragregasi di controller untuk analisis.
 
+### Sweep spektrum HackRF (remote)
+
+Mode `sweep` menjalankan `hackrf_sweep` di agent ber-HackRF dan dipicu dari
+controller. Belum ada halaman dashboard khusus; operasikan via endpoint proxy
+controller (perlu sesi login controller):
+
+```
+# Mulai sweep 2400-2483 MHz, bin 200 kHz
+POST /controller/agents/<id>/sweep/start
+     {"start_mhz":2400,"stop_mhz":2483,"bin_hz":200000}
+# Ambil spektrum terkini: {spectrum:[{freq_mhz,power_db}], peak_freq_mhz, ...}
+GET  /controller/agents/<id>/sweep/data
+# Hentikan
+POST /controller/agents/<id>/sweep/stop
+```
+
+Param opsional: `start_mhz`, `stop_mhz` (1-7250), `bin_hz` (2445-5000000),
+`lna_gain` (0-40), `vga_gain` (0-62), `one_shot`. Mode `sweep` hanya muncul pada
+agent yang punya `hackrf_sweep` dan perangkat HackRF.
+
 ## 8. Langkah 6 - Ekspor data riset (E1-E5)
 
 Untuk rangkaian eksperimen di [JI-TU-RUANG-LINGKUP.md](JI-TU-RUANG-LINGKUP.md):
