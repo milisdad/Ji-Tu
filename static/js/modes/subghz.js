@@ -1698,11 +1698,15 @@ const SubGhz = (function() {
             }
             remoteSweepAgentId = id;
             const body = { start_mhz: Math.round(startMhz), stop_mhz: Math.round(endMhz), bin_hz: 200000 };
-            fetch(`/controller/agents/${id}/sweep/start`, {
+            // Hentikan sweep lama dulu (bila ada) agar start bersih dan rentang baru berlaku,
+            // menghindari error "sweep already running" (502) saat klik ulang / setelah reload.
+            fetch(`/controller/agents/${id}/sweep/stop`, { method: 'POST' })
+            .catch(() => {})
+            .then(() => fetch(`/controller/agents/${id}/sweep/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
-            })
+            }))
             .then(r => r.json())
             .then(j => {
                 const r = j.result || {};
