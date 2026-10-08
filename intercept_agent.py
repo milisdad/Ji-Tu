@@ -3913,6 +3913,52 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
         self.end_headers()
 
+    # --- Ji-Tu: SubGHz transceiver di agent (pakai ulang utils.subghz.SubGhzManager) ---
+    def _subghz_mgr(self):
+        from utils.subghz import get_subghz_manager
+        return get_subghz_manager()
+
+    def _subghz_status(self) -> dict:
+        try:
+            return self._subghz_mgr().get_status()
+        except Exception as e:
+            return {"status": "error", "message": f"subghz unavailable: {e}"}
+
+    def _subghz_captures(self) -> list:
+        try:
+            caps = self._subghz_mgr().list_captures()
+            return [c.to_dict() if hasattr(c, "to_dict") else c for c in caps]
+        except Exception as e:
+            logger.warning(f"subghz captures list failed: {e}")
+            return []
+
+    def _subghz_receive_start(self, body: dict) -> dict:
+        try:
+            freq_hz = 0
+            if body.get("frequency_hz"):
+                freq_hz = int(body["frequency_hz"])
+            elif body.get("frequency_mhz"):
+                freq_hz = int(float(body["frequency_mhz"]) * 1e6)
+            if not freq_hz:
+                return {"status": "error", "message": "frequency_hz required"}
+            kwargs = {"frequency_hz": freq_hz}
+            for k in ("sample_rate", "lna_gain", "vga_gain", "trigger_pre_ms", "trigger_post_ms"):
+                if body.get(k) is not None:
+                    kwargs[k] = int(body[k])
+            if "trigger_enabled" in body:
+                kwargs["trigger_enabled"] = bool(body["trigger_enabled"])
+            if body.get("device_serial"):
+                kwargs["device_serial"] = str(body["device_serial"])
+            return self._subghz_mgr().start_receive(**kwargs)
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _subghz_receive_stop(self) -> dict:
+        try:
+            return self._subghz_mgr().stop_receive()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     def do_GET(self):
         """Handle GET requests."""
         if not self._check_ip_allowed():
@@ -3946,6 +3992,12 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
             if "controller_api_key" in cfg:
                 del cfg["controller_api_key"]
             self._send_json(cfg)
+
+        elif path == "/subghz/status":
+            self._send_json(self._subghz_status())
+
+        elif path == "/subghz/captures":
+            self._send_json({"status": "success", "captures": self._subghz_captures()})
 
         elif path.startswith("/") and path.count("/") == 2:
             # /{mode}/status or /{mode}/data
@@ -3985,6 +4037,14 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
             result = mode_manager.toggle_monitor_mode(body)
             status = 200 if result.get("status") == "success" else 400
             self._send_json(result, status)
+
+        elif path == "/subghz/receive/start":
+            result = self._subghz_receive_start(body)
+            status = 200 if result.get("status") in ("started", "success") else 400
+            self._send_json(result, status)
+
+        elif path == "/subghz/receive/stop":
+            self._send_json(self._subghz_receive_stop())
 
         elif path.startswith("/") and path.count("/") == 2:
             # /{mode}/start or /{mode}/stop
