@@ -55,6 +55,22 @@
     margin-bottom: 30px;
 }
 
+/* Unjaya logo: green asset by default (light theme); recolour to white on dark. */
+.landing-logo-img {
+    max-width: 240px;
+    width: 80%;
+    height: auto;
+    filter: brightness(0) invert(1);
+}
+
+html[data-theme="light"] .landing-logo-img {
+    filter: none;
+}
+
+.landing-brand {
+    color: var(--text-primary);
+}
+
 /* The Login Box */
 .login-box {
     background: var(--bg-secondary);
@@ -118,6 +134,7 @@
     margin-top: 25px;
     font-family: var(--font-mono);
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-primary);
+    opacity: 0.4;
     letter-spacing: 2px;
 }
