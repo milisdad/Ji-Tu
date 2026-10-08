@@ -94,7 +94,7 @@
         </div>
         <div class="btn-row">
             <button id="startBtn" class="btn start" onclick="RSweep.start()">Start</button>
-            <button id="stopBtn" class="btn stop" onclick="RSweep.stop()" disabled>Stop</button>
+            <button id="stopBtn" class="btn stop" onclick="RSweep.stop()">Stop</button>
             <span class="status"><span id="stDot" class="dot"></span><span id="stText">Idle</span></span>
         </div>
         <div id="errLine" class="err"></div>
@@ -151,7 +151,7 @@ const RSweep = (function () {
     function uiRunning(on) {
         running = on;
         $('startBtn').disabled = on;
-        $('stopBtn').disabled = !on;
+        $('stopBtn').disabled = false;  // selalu bisa diklik, agar sweep lama bisa dihentikan kapan pun
         $('agentSel').disabled = on;
         $('stDot').className = 'dot' + (on ? ' on' : '');
         $('stText').textContent = on ? 'Scanning...' : 'Idle';
@@ -171,6 +171,8 @@ const RSweep = (function () {
         if (!(body.start_mhz < body.stop_mhz)) { setErr('Mulai harus < Selesai.'); return; }
         curRange = [body.start_mhz, body.stop_mhz];
         try {
+            // Hentikan sweep lama dulu agar tak kena "sweep already running".
+            try { await fetch(`/controller/agents/${id}/sweep/stop`, { method: 'POST' }); } catch (e) { /* abaikan */ }
             const res = await fetch(`/controller/agents/${id}/sweep/start`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
             });
