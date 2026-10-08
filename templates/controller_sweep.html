@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ji-Tu // Spektrum HackRF Remote</title>
+    <script>(function(){var t=localStorage.getItem('intercept-ui-tier')||'enhanced';document.documentElement.setAttribute('data-ui-tier',t);try{var th=localStorage.getItem('intercept-theme')||'light';document.documentElement.setAttribute('data-theme',th);}catch(e){}})();</script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts-local.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/layout.css') }}">
+    <style>
+        body { background: var(--bg-primary); color: var(--text-primary); margin: 0;
+               font-family: var(--font-sans, 'Inter', system-ui, sans-serif); }
+        .sw-wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+        .sw-head { display: flex; align-items: center; gap: 12px; padding: 10px 4px 16px;
+                   border-bottom: 1px solid var(--border-color); margin-bottom: 16px; flex-wrap: wrap; }
+        .sw-head img { height: 30px; width: auto; }
+        .sw-title { font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 16px; }
+        .sw-title span { color: var(--text-secondary); font-weight: 500; }
+        .sw-back { margin-left: auto; color: var(--accent-cyan); text-decoration: none;
+                   font-family: var(--font-mono, monospace); font-size: 13px; border: 1px solid var(--border-color);
+                   padding: 6px 12px; border-radius: 6px; }
+        .sw-back:hover { border-color: var(--accent-cyan); }
+        .card { background: var(--bg-secondary); border: 1px solid var(--border-color);
+                border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+        .ctrl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; align-items: end; }
+        .fld label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+                     color: var(--text-secondary); margin-bottom: 4px; }
+        .fld input, .fld select { width: 100%; box-sizing: border-box; background: var(--bg-primary);
+                     color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px;
+                     padding: 8px; font-family: var(--font-mono, monospace); font-size: 13px; }
+        .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+        .btn { border: none; border-radius: 6px; padding: 10px 18px; font-weight: 600; cursor: pointer;
+               font-family: var(--font-mono, monospace); letter-spacing: 1px; text-transform: uppercase; font-size: 13px; }
+        .btn.start { background: var(--accent-cyan); color: #fff; }
+        .btn.stop { background: transparent; color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .status { font-family: var(--font-mono, monospace); font-size: 13px; color: var(--text-secondary); }
+        .status b { color: var(--text-primary); }
+        .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #888; margin-right: 6px; }
+        .dot.on { background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan); }
+        .chart-wrap { position: relative; }
+        #spectrumCanvas { width: 100%; height: 380px; display: block; }
+        .peak { font-family: var(--font-mono, monospace); font-size: 13px; margin-top: 8px; color: var(--text-primary); }
+        .hint { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+        .err { color: var(--accent-red); font-family: var(--font-mono, monospace); font-size: 13px; margin-top: 8px; min-height: 16px; }
+    </style>
+</head>
+
+<body>
+<div class="sw-wrap">
+    <div class="sw-head">
+        <img src="{{ url_for('static', filename='img/logo-unjaya.png') }}" alt="UNJAYA">
+        <div class="sw-title">Spektrum HackRF <span>// Remote (via agent)</span></div>
+        <a class="sw-back" href="/controller/manage">&larr; Agents</a>
+    </div>
+
+    <div class="card">
+        <div class="ctrl-grid">
+            <div class="fld">
+                <label for="agentSel">Agent</label>
+                <select id="agentSel"></select>
+            </div>
+            <div class="fld">
+                <label for="fMin">Mulai (MHz)</label>
+                <input id="fMin" type="number" value="2400" min="1" max="7250" step="1">
+            </div>
+            <div class="fld">
+                <label for="fMax">Selesai (MHz)</label>
+                <input id="fMax" type="number" value="2483" min="2" max="7250" step="1">
+            </div>
+            <div class="fld">
+                <label for="binKhz">Bin (kHz)</label>
+                <select id="binKhz">
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200" selected>200</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                </select>
+            </div>
+            <div class="fld">
+                <label for="lna">LNA (0-40)</label>
+                <input id="lna" type="number" value="24" min="0" max="40" step="8">
+            </div>
+            <div class="fld">
+                <label for="vga">VGA (0-62)</label>
+                <input id="vga" type="number" value="20" min="0" max="62" step="2">
+            </div>
+        </div>
+        <div class="btn-row">
+            <button id="startBtn" class="btn start" onclick="RSweep.start()">Start</button>
+            <button id="stopBtn" class="btn stop" onclick="RSweep.stop()" disabled>Stop</button>
+            <span class="status"><span id="stDot" class="dot"></span><span id="stText">Idle</span></span>
+        </div>
+        <div id="errLine" class="err"></div>
+        <div class="hint">Mode <code>sweep</code> hanya untuk agent ber-HackRF. Rentang lebar dibagi blok 20 MHz; snapshot penuh muncul setelah satu putaran.</div>
+    </div>
+
+    <div class="card chart-wrap">
+        <canvas id="spectrumCanvas"></canvas>
+        <div id="peakLine" class="peak">&mdash;</div>
+    </div>
+</div>
+
+<script>
+const RSweep = (function () {
+    let pollTimer = null;
+    let running = false;
+    let curRange = [2400, 2483];
+
+    function $(id) { return document.getElementById(id); }
+    function setErr(msg) { $('errLine').textContent = msg || ''; }
+    function cssVar(n, fb) {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+        return v || fb;
+    }
+
+    async function loadAgents() {
+        try {
+            const res = await fetch('/controller/agents');
+            const j = await res.json();
+            const sel = $('agentSel');
+            sel.innerHTML = '';
+            const agents = (j.agents || []);
+            if (!agents.length) {
+                sel.innerHTML = '<option value="">(tidak ada agent terdaftar)</option>';
+                return;
+            }
+            agents.forEach(a => {
+                const caps = a.capabilities || {};
+                const hasSweep = caps.sweep === true;
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.name + (hasSweep ? '' : '  (tanpa HackRF/sweep)');
+                opt.dataset.sweep = hasSweep ? '1' : '0';
+                sel.appendChild(opt);
+            });
+            // Prefer first sweep-capable agent
+            const firstSweep = Array.from(sel.options).find(o => o.dataset.sweep === '1');
+            if (firstSweep) sel.value = firstSweep.value;
+        } catch (e) {
+            setErr('Gagal memuat daftar agent: ' + e.message);
+        }
+    }
+
+    function uiRunning(on) {
+        running = on;
+        $('startBtn').disabled = on;
+        $('stopBtn').disabled = !on;
+        $('agentSel').disabled = on;
+        $('stDot').className = 'dot' + (on ? ' on' : '');
+        $('stText').textContent = on ? 'Scanning...' : 'Idle';
+    }
+
+    async function start() {
+        setErr('');
+        const id = $('agentSel').value;
+        if (!id) { setErr('Pilih agent dulu.'); return; }
+        const body = {
+            start_mhz: parseInt($('fMin').value, 10),
+            stop_mhz: parseInt($('fMax').value, 10),
+            bin_hz: parseInt($('binKhz').value, 10) * 1000,
+            lna_gain: parseInt($('lna').value, 10),
+            vga_gain: parseInt($('vga').value, 10)
+        };
+        if (!(body.start_mhz < body.stop_mhz)) { setErr('Mulai harus < Selesai.'); return; }
+        curRange = [body.start_mhz, body.stop_mhz];
+        try {
+            const res = await fetch(`/controller/agents/${id}/sweep/start`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+            });
+            const j = await res.json();
+            const r = j.result || {};
+            if (j.status !== 'success' || (r.status && r.status !== 'started')) {
+                setErr('Gagal mulai: ' + (r.message || j.message || res.status));
+                return;
+            }
+            uiRunning(true);
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(() => poll(id), 1500);
+            poll(id);
+        } catch (e) {
+            setErr('Error: ' + e.message);
+        }
+    }
+
+    async function stop() {
+        const id = $('agentSel').value;
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        uiRunning(false);
+        try {
+            await fetch(`/controller/agents/${id}/sweep/stop`, { method: 'POST' });
+        } catch (e) { /* abaikan */ }
+    }
+
+    async function poll(id) {
+        try {
+            const res = await fetch(`/controller/agents/${id}/sweep/data`);
+            const j = await res.json();
+            const d = (j.data && j.data.data) ? j.data.data : null;
+            if (!d) return;
+            draw(d.spectrum || []);
+            if (d.peak_freq_mhz != null) {
+                $('peakLine').innerHTML = `Puncak: <b>${d.peak_freq_mhz} MHz</b> @ <b>${d.peak_power_db} dB</b>` +
+                    ` &nbsp;|&nbsp; ${d.points || 0} titik &nbsp;|&nbsp; ${d.freq_min_mhz}-${d.freq_max_mhz} MHz`;
+            }
+        } catch (e) { /* biar poll berikutnya mencoba lagi */ }
+    }
+
+    function draw(points) {
+        const cv = $('spectrumCanvas');
+        const dpr = window.devicePixelRatio || 1;
+        const W = cv.clientWidth, H = cv.clientHeight;
+        cv.width = W * dpr; cv.height = H * dpr;
+        const ctx = cv.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+
+        const text = cssVar('--text-secondary', '#888');
+        const grid = cssVar('--border-color', '#ccc');
+        const accent = cssVar('--accent-cyan', '#006030');
+        const padL = 46, padR = 12, padT = 12, padB = 26;
+        const plotW = W - padL - padR, plotH = H - padT - padB;
+
+        let xMin = curRange[0], xMax = curRange[1];
+        let yMin = -110, yMax = -10;
+        if (points.length) {
+            xMin = points[0].freq_mhz; xMax = points[points.length - 1].freq_mhz;
+            let lo = Infinity, hi = -Infinity;
+            for (const p of points) { if (p.power_db < lo) lo = p.power_db; if (p.power_db > hi) hi = p.power_db; }
+            if (isFinite(lo) && isFinite(hi)) { yMin = Math.floor((lo - 5) / 10) * 10; yMax = Math.ceil((hi + 5) / 10) * 10; }
+        }
+        const xToPx = f => padL + (f - xMin) / (xMax - xMin || 1) * plotW;
+        const yToPx = p => padT + (yMax - p) / (yMax - yMin || 1) * plotH;
+
+        // Grid + labels
+        ctx.font = '10px monospace'; ctx.fillStyle = text; ctx.strokeStyle = grid; ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i++) {
+            const yv = yMin + (yMax - yMin) * i / 5;
+            const y = yToPx(yv);
+            ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+            ctx.globalAlpha = 1; ctx.textAlign = 'right'; ctx.fillText(yv.toFixed(0), padL - 6, y + 3);
+        }
+        for (let i = 0; i <= 6; i++) {
+            const xv = xMin + (xMax - xMin) * i / 6;
+            const x = xToPx(xv);
+            ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, H - padB); ctx.stroke();
+            ctx.globalAlpha = 1; ctx.textAlign = 'center'; ctx.fillText(xv.toFixed(0), x, H - padB + 14);
+        }
+        ctx.textAlign = 'left'; ctx.fillText('dB', 6, padT + 8);
+        ctx.textAlign = 'right'; ctx.fillText('MHz', W - padR, H - 4);
+
+        if (!points.length) return;
+        // Spectrum line
+        ctx.strokeStyle = accent; ctx.lineWidth = 1.4; ctx.beginPath();
+        points.forEach((p, i) => {
+            const x = xToPx(p.freq_mhz), y = yToPx(p.power_db);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Peak marker
+        let pk = points[0];
+        for (const p of points) if (p.power_db > pk.power_db) pk = p;
+        const px = xToPx(pk.freq_mhz), py = yToPx(pk.power_db);
+        ctx.fillStyle = cssVar('--accent-red', '#e23');
+        ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function init() {
+        loadAgents();
+        window.addEventListener('beforeunload', () => { if (running) { const id = $('agentSel').value; navigator.sendBeacon && navigator.sendBeacon(`/controller/agents/${id}/sweep/stop`); } });
+        draw([]);
+    }
+
+    return { start, stop, init };
+})();
+document.addEventListener('DOMContentLoaded', RSweep.init);
+</script>
+</body>
+</html>

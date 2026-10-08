@@ -61,7 +61,7 @@ _AGENT_PUSH_ENDPOINTS = frozenset({"controller.ingest_push_data"})
 
 # Browser pages in this blueprint. An unauthenticated request for these gets
 # the same redirect the rest of the app gives, rather than a bare 401.
-_BROWSER_PAGE_ENDPOINTS = frozenset({"controller.agent_management_page", "controller.network_monitor_page"})
+_BROWSER_PAGE_ENDPOINTS = frozenset({"controller.agent_management_page", "controller.network_monitor_page", "controller.remote_sweep_page"})
 
 
 @controller_bp.before_request
@@ -777,6 +777,16 @@ def network_monitor_page():
     from config import VERSION
 
     return render_template("network_monitor.html", version=VERSION)
+
+
+@controller_bp.route("/sweep")
+def remote_sweep_page():
+    """Render the remote HackRF spectrum sweep page (drives agent sweep via proxy)."""
+    from flask import render_template
+
+    from config import VERSION
+
+    return render_template("controller_sweep.html", version=VERSION)
 
 
 # =============================================================================
