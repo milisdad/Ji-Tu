@@ -620,12 +620,12 @@ def proxy_wifi_monitor(agent_id: int):
         return api_error(f"Agent error: {e}", 502)
 
 
-@controller_bp.route("/agents/<int:agent_id>/subghz/<path:subpath>", methods=["GET", "POST"])
+@controller_bp.route("/agents/<int:agent_id>/subghz/<path:subpath>", methods=["GET", "POST", "DELETE", "PATCH"])
 def proxy_subghz(agent_id: int, subpath: str):
     """Proxy SubGHz transceiver calls (RX/captures/TX) to a remote agent.
 
     Meneruskan status + body apa adanya agar UI menerima respons asli agent
-    (termasuk pesan error 400), dan unduhan biner capture nanti.
+    (termasuk pesan error 400 dan unduhan biner capture).
     """
     agent = get_agent(agent_id)
     if not agent:
@@ -635,11 +635,16 @@ def proxy_subghz(agent_id: int, subpath: str):
     key = get_agent_api_key(agent_id)
     if key:
         headers["X-API-Key"] = key
+    method = request.method
     try:
-        if request.method == "POST":
-            resp = requests.post(url, json=(request.get_json(silent=True) or {}), headers=headers, timeout=30)
+        if method == "POST":
+            resp = requests.post(url, json=(request.get_json(silent=True) or {}), headers=headers, timeout=60)
+        elif method == "DELETE":
+            resp = requests.delete(url, headers=headers, timeout=30)
+        elif method == "PATCH":
+            resp = requests.patch(url, json=(request.get_json(silent=True) or {}), headers=headers, timeout=30)
         else:
-            resp = requests.get(url, headers=headers, params=request.args.to_dict(flat=True), timeout=30)
+            resp = requests.get(url, headers=headers, params=request.args.to_dict(flat=True), timeout=60)
     except requests.RequestException as e:
         return api_error(f"Cannot reach agent: {e}", 503)
     try:

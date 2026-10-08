@@ -3959,6 +3959,93 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    def _subghz_capture_get(self, cid: str) -> dict:
+        try:
+            c = self._subghz_mgr().get_capture(cid)
+            if not c:
+                return {"status": "error", "message": "Capture not found"}
+            return {"status": "ok", "capture": c.to_dict() if hasattr(c, "to_dict") else c}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _subghz_inspect(self, cid: str, burst) -> dict:
+        try:
+            bi = int(burst) if burst not in (None, "") else None
+            return self._subghz_mgr().inspect_capture(cid, bi)
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _subghz_trim(self, cid: str, body: dict) -> dict:
+        try:
+            return self._subghz_mgr().trim_capture(
+                capture_id=cid,
+                start_seconds=body.get("start_seconds"),
+                duration_seconds=body.get("duration_seconds"),
+                label=(body.get("label") or ""),
+            )
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _subghz_delete(self, cid: str) -> dict:
+        try:
+            ok = self._subghz_mgr().delete_capture(cid)
+            return {"status": "deleted", "id": cid} if ok else {"status": "error", "message": "Capture not found"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _subghz_update_label(self, cid: str, label: str) -> dict:
+        try:
+            ok = self._subghz_mgr().update_capture_label(cid, label or "")
+            return {"status": "updated", "id": cid, "label": label} if ok else {"status": "error", "message": "Capture not found"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _subghz_send_download(self, cid: str):
+        try:
+            p = self._subghz_mgr().get_capture_path(cid)
+            if not p or not os.path.exists(str(p)):
+                self._send_error("Capture not found", 404)
+                return
+            with open(str(p), "rb") as fh:
+                data = fh.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(str(p))}"')
+            self.send_header("Content-Length", str(len(data)))
+            if config.allow_cors:
+                self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            self._send_error(f"download failed: {e}", 500)
+
+    def do_DELETE(self):
+        """Handle DELETE (subghz captures)."""
+        if not self._check_ip_allowed():
+            self._send_error("Forbidden", 403)
+            return
+        path, _ = self._parse_path()
+        if path.startswith("/subghz/captures/"):
+            cid = path[len("/subghz/captures/"):]
+            res = self._subghz_delete(cid)
+            self._send_json(res, 200 if res.get("status") == "deleted" else 404)
+        else:
+            self._send_error("Not found", 404)
+
+    def do_PATCH(self):
+        """Handle PATCH (subghz capture rename)."""
+        if not self._check_ip_allowed():
+            self._send_error("Forbidden", 403)
+            return
+        path, _ = self._parse_path()
+        body = self._read_body()
+        if path.startswith("/subghz/captures/"):
+            cid = path[len("/subghz/captures/"):]
+            res = self._subghz_update_label(cid, body.get("label", ""))
+            self._send_json(res, 200 if res.get("status") == "updated" else 404)
+        else:
+            self._send_error("Not found", 404)
+
     def do_GET(self):
         """Handle GET requests."""
         if not self._check_ip_allowed():
@@ -3998,6 +4085,20 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
 
         elif path == "/subghz/captures":
             self._send_json({"status": "success", "captures": self._subghz_captures()})
+
+        elif path.startswith("/subghz/captures/"):
+            seg = path[len("/subghz/captures/"):].split("/")
+            cid = seg[0]
+            action = seg[1] if len(seg) > 1 else ""
+            if action == "download":
+                self._subghz_send_download(cid)
+            elif action == "inspect":
+                self._send_json(self._subghz_inspect(cid, params.get("burst")))
+            elif action == "":
+                res = self._subghz_capture_get(cid)
+                self._send_json(res, 200 if res.get("status") == "ok" else 404)
+            else:
+                self._send_error("Not found", 404)
 
         elif path.startswith("/") and path.count("/") == 2:
             # /{mode}/status or /{mode}/data
@@ -4045,6 +4146,11 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
 
         elif path == "/subghz/receive/stop":
             self._send_json(self._subghz_receive_stop())
+
+        elif path.startswith("/subghz/captures/") and path.endswith("/trim"):
+            cid = path[len("/subghz/captures/"):-len("/trim")]
+            res = self._subghz_trim(cid, body)
+            self._send_json(res, 200 if res.get("status") == "ok" else 400)
 
         elif path.startswith("/") and path.count("/") == 2:
             # /{mode}/start or /{mode}/stop
