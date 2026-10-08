@@ -63,6 +63,10 @@ const SubGhz = (function() {
     let hackrfDetected = false;
     let rtl433Detected = false;
     let sweepDetected = false;
+    // Ji-Tu: state sweep via HackRF agen remote (controller tanpa HackRF lokal)
+    let remoteSweepAgentId = null;
+    let remoteSweepTimer = null;
+    let remoteSweepActive = false;
 
     // Interactive sweep state
     const SWEEP_PAD = { top: 20, right: 20, bottom: 30, left: 50 };
@@ -1623,6 +1627,9 @@ const SubGhz = (function() {
         showPanel('sweep');
         initSweepCanvas();
 
+        // Ji-Tu: bila hackrf_sweep lokal tak ada, arahkan sweep ke HackRF agen remote.
+        if (!sweepDetected) { startSweepRemote(startMhz, endMhz); return; }
+
         const body = {
             freq_start_mhz: startMhz,
             freq_end_mhz: endMhz,
@@ -1651,6 +1658,16 @@ const SubGhz = (function() {
     }
 
     function stopSweep() {
+        if (remoteSweepActive) {
+            if (remoteSweepTimer) { clearInterval(remoteSweepTimer); remoteSweepTimer = null; }
+            remoteSweepActive = false;
+            const id = remoteSweepAgentId;
+            updateStatusUI({ mode: 'idle' });
+            addConsoleEntry('Sweep remote dihentikan', 'warn');
+            updatePhaseIndicator(null);
+            if (id) fetch(`/controller/agents/${id}/sweep/stop`, { method: 'POST' }).catch(() => {});
+            return;
+        }
         fetch('/subghz/sweep/stop', { method: 'POST' })
             .then(r => r.json())
             .then(() => {
@@ -1659,6 +1676,63 @@ const SubGhz = (function() {
                 updatePhaseIndicator(null);
             })
             .catch(err => alert('Error: ' + err.message));
+    }
+
+    // Ji-Tu: sweep spektrum via HackRF agen remote (dipakai saat hackrf_sweep lokal tak ada).
+    function findRemoteHackrfAgent() {
+        return fetch('/controller/agents')
+            .then(r => r.ok ? r.json() : null)
+            .then(j => {
+                if (!j) return null;
+                const a = (j.agents || []).find(x => (x.capabilities || {}).sweep === true);
+                return a ? a.id : null;
+            })
+            .catch(() => null);
+    }
+
+    function startSweepRemote(startMhz, endMhz) {
+        findRemoteHackrfAgent().then(id => {
+            if (!id) {
+                alert('hackrf_sweep tidak tersedia di controller ini, dan tidak ada agent ber-HackRF yang terdaftar.');
+                return;
+            }
+            remoteSweepAgentId = id;
+            const body = { start_mhz: Math.round(startMhz), stop_mhz: Math.round(endMhz), bin_hz: 200000 };
+            fetch(`/controller/agents/${id}/sweep/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            })
+            .then(r => r.json())
+            .then(j => {
+                const r = j.result || {};
+                if (j.status !== 'success' || (r.status && r.status !== 'started')) {
+                    alert('Gagal mulai sweep remote: ' + (r.message || j.message || 'tidak diketahui'));
+                    return;
+                }
+                remoteSweepActive = true;
+                updateStatusUI({ mode: 'sweep' });
+                showConsole();
+                addConsoleEntry('Sweep remote (agent) ' + startMhz + ' - ' + endMhz + ' MHz', 'info');
+                updatePhaseIndicator('listening');
+                if (remoteSweepTimer) clearInterval(remoteSweepTimer);
+                remoteSweepTimer = setInterval(pollRemoteSweep, 1500);
+                pollRemoteSweep();
+            })
+            .catch(e => alert('Error: ' + e.message));
+        });
+    }
+
+    function pollRemoteSweep() {
+        if (!remoteSweepAgentId) return;
+        fetch(`/controller/agents/${remoteSweepAgentId}/sweep/data`)
+            .then(r => r.json())
+            .then(j => {
+                const d = (j.data && j.data.data) ? j.data.data : null;
+                if (!d || !d.spectrum || !d.spectrum.length) return;
+                updateSweepChart(d.spectrum.map(p => ({ freq: p.freq_mhz, power: p.power_db })));
+            })
+            .catch(() => {});
     }
 
     function initSweepCanvas() {
