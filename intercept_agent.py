@@ -3106,11 +3106,17 @@ class ModeManager:
         }
 
     def _sweep_output_reader(self, proc: subprocess.Popen):
-        """Parse CSV hackrf_sweep menjadi spektrum {freq_mhz, power_db} per satu sapuan penuh."""
+        """Parse CSV hackrf_sweep menjadi spektrum {freq_mhz, power_db}.
+
+        hackrf_sweep menyapu per-blok 20 MHz yang urutannya tak selalu menaik, jadi
+        kita akumulasikan seluruh bin (nilai terbaru per frekuensi menimpa yang lama)
+        dan publish snapshot penuh secara berkala. Setelah satu putaran penuh, snapshot
+        mencakup seluruh rentang yang diminta.
+        """
         mode = "sweep"
         stop_event = self.stop_events.get(mode)
         spectrum: dict[float, float] = {}
-        prev_low = None
+        last_pub = 0.0
         try:
             for line in proc.stdout:
                 if stop_event and stop_event.is_set():
@@ -3124,14 +3130,13 @@ class ModeManager:
                     dbs = [float(x) for x in parts[6:]]
                 except ValueError:
                     continue
-                # Satu sapuan penuh selesai saat frekuensi awal turun kembali ke bawah.
-                if prev_low is not None and hz_low < prev_low and spectrum:
-                    self._publish_sweep(spectrum)
-                    spectrum = {}
-                prev_low = hz_low
                 for i, db in enumerate(dbs):
                     fmhz = round((hz_low + (i + 0.5) * hz_bin) / 1e6, 3)
                     spectrum[fmhz] = round(db, 1)
+                now = time.monotonic()
+                if now - last_pub >= 1.0:
+                    self._publish_sweep(spectrum)
+                    last_pub = now
         except (ValueError, OSError):
             pass
         finally:
