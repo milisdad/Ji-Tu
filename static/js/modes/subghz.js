@@ -67,6 +67,7 @@ const SubGhz = (function() {
     let remoteSweepAgentId = null;
     let remoteSweepTimer = null;
     let remoteSweepActive = false;
+    let subghzRemoteAgentId = null;  // agent utk operasi subghz remote (RX/TX) bila controller tanpa HackRF lokal
 
     // Interactive sweep state
     const SWEEP_PAD = { top: 20, right: 20, bottom: 30, left: 50 };
@@ -760,9 +761,21 @@ const SubGhz = (function() {
 
     // ------ RECEIVE ------
 
+    // Ji-Tu: pilih target subghz - lokal (controller ber-HackRF) atau agent remote.
+    function _subghzWithAgent(cb) {
+        if (hackrfDetected) { cb(''); return; }
+        if (subghzRemoteAgentId) { cb('/controller/agents/' + subghzRemoteAgentId); return; }
+        findRemoteHackrfAgent().then(function (id) {
+            if (!id) { alert('HackRF tidak ada di controller ini dan tidak ada agent ber-HackRF terdaftar.'); return; }
+            subghzRemoteAgentId = id;
+            cb('/controller/agents/' + id);
+        });
+    }
+
     function startRx() {
         const params = getParams();
-        fetch('/subghz/receive/start', {
+        _subghzWithAgent(function (base) {
+        fetch(base + '/subghz/receive/start', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(params),
@@ -770,6 +783,7 @@ const SubGhz = (function() {
         .then(r => r.json())
         .then(data => {
             if (data.status === 'started') {
+                if (base) addConsoleEntry('Capture berjalan di agent remote; hasil tersimpan di agent (burst langsung belum tersedia untuk remote).', 'info');
                 updateStatusUI({ mode: 'rx' });
                 startStatusTimer();
                 showPanel('rx');
@@ -796,10 +810,12 @@ const SubGhz = (function() {
             }
         })
         .catch(err => alert('Error: ' + err.message));
+        });
     }
 
     function stopRx() {
-        fetch('/subghz/receive/stop', { method: 'POST' })
+        _subghzWithAgent(function (base) {
+        fetch(base + '/subghz/receive/stop', { method: 'POST' })
             .then(r => r.json())
             .then(data => {
                 updateStatusUI({ mode: 'idle' });
@@ -810,6 +826,7 @@ const SubGhz = (function() {
                 loadCaptures();
             })
             .catch(err => alert('Error: ' + err.message));
+        });
     }
 
     // ------ DECODE ------

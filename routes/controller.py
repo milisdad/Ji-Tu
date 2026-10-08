@@ -620,6 +620,39 @@ def proxy_wifi_monitor(agent_id: int):
         return api_error(f"Agent error: {e}", 502)
 
 
+@controller_bp.route("/agents/<int:agent_id>/subghz/<path:subpath>", methods=["GET", "POST"])
+def proxy_subghz(agent_id: int, subpath: str):
+    """Proxy SubGHz transceiver calls (RX/captures/TX) to a remote agent.
+
+    Meneruskan status + body apa adanya agar UI menerima respons asli agent
+    (termasuk pesan error 400), dan unduhan biner capture nanti.
+    """
+    agent = get_agent(agent_id)
+    if not agent:
+        return api_error("Agent not found", 404)
+    url = agent["base_url"].rstrip("/") + "/subghz/" + subpath
+    headers = {}
+    key = get_agent_api_key(agent_id)
+    if key:
+        headers["X-API-Key"] = key
+    try:
+        if request.method == "POST":
+            resp = requests.post(url, json=(request.get_json(silent=True) or {}), headers=headers, timeout=30)
+        else:
+            resp = requests.get(url, headers=headers, params=request.args.to_dict(flat=True), timeout=30)
+    except requests.RequestException as e:
+        return api_error(f"Cannot reach agent: {e}", 503)
+    try:
+        update_agent(agent_id, update_last_seen=True)
+    except Exception:
+        pass
+    return Response(
+        resp.content,
+        status=resp.status_code,
+        content_type=resp.headers.get("Content-Type", "application/json"),
+    )
+
+
 # =============================================================================
 # Push Data Ingestion
 # =============================================================================
