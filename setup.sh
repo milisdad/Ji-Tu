@@ -3044,6 +3044,46 @@ install_agent_python_deps() {
 }
 
 # Pasang service systemd agar agent otomatis jalan saat boot.
+install_controller_service() {
+  # Service systemd untuk controller (dashboard). Tanpa ini, controller harus
+  # dijalankan manual (mis. dari terminal) dan tidak auto-start/auto-restart -
+  # sumber kekacauan saat deployment. Jalan sebagai user pemanggil (bukan root);
+  # port 5050 tidak butuh root.
+  if ! cmd_exists systemctl; then
+    info "Lewati service systemd (systemctl tak tersedia). Jalankan: sudo ./start.sh"
+    return 0
+  fi
+  if ! ask_yes_no "Pasang service systemd 'jitu' (controller auto-start saat boot)?" "y"; then
+    return 0
+  fi
+  local dir; dir="$(pwd)"
+  local run_user="${SUDO_USER:-$(id -un)}"
+  local host="${INTERCEPT_HOST:-0.0.0.0}"
+  local port="${INTERCEPT_PORT:-5050}"
+  $SUDO tee /etc/systemd/system/jitu.service >/dev/null <<EOF
+[Unit]
+Description=Ji-Tu (Powered by iNTERCEPT) - controller/dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${run_user}
+WorkingDirectory=${dir}
+Environment=INTERCEPT_HOST=${host}
+Environment=INTERCEPT_PORT=${port}
+ExecStart=${dir}/venv/bin/python ${dir}/intercept.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  $SUDO systemctl daemon-reload
+  $SUDO systemctl enable jitu.service >/dev/null 2>&1 || true
+  ok "Service jitu terpasang (User=${run_user}). Mulai: sudo systemctl start jitu"
+}
+
 install_agent_service() {
   if [[ "$OS" != "debian" ]] || ! cmd_exists systemctl; then
     info "Lewati service systemd (systemctl tak tersedia)"
@@ -3087,10 +3127,18 @@ do_role_install() {
     controller)
       info "Instalasi peran: CONTROLLER (dashboard, tanpa tool SDR lokal)"
       install_python_deps
+      install_controller_service
       echo
       ok "Controller siap."
-      echo "  Jalankan : sudo ./start.sh   (buka http://localhost:5050)"
-      echo "  Daftarkan agent di /controller/manage memakai IP ZeroTier:8020"
+      echo "  Mulai    : sudo systemctl start jitu   (atau manual: sudo ./start.sh)"
+      echo "  Dashboard: http://<IP-ZeroTier-controller>:5050"
+      echo "  Firewall : jika ufw aktif, buka 5050 dari subnet overlay:"
+      echo "             sudo ufw allow from <subnet>/24 to any port 5050 proto tcp"
+      echo "  Daftar agent (salah satu):"
+      echo "     - UI    : /controller/manage (base_url http://<IP-agent>:8020)"
+      echo "     - CLI   : venv/bin/python scripts/register_agent.py <nama> http://<IP-agent>:8020 --api-key <key>"
+      echo "  PENTING  : allowed_ips tiap agent HARUS memuat IP controller ini (exact IP, bukan CIDR)."
+      echo "             Untuk push, api_key agent harus non-kosong dan sama dengan yang didaftarkan."
       ;;
     agent)
       info "Instalasi peran: AGENT (node sensor)"

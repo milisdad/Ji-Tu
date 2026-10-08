@@ -172,3 +172,42 @@ Beri `exp` berbeda tiap eksperimen agar mudah dipisah saat analisis.
 - **SDR tak terdeteksi**: pada Debian, pastikan driver dan aturan udev terpasang
   (ikut saat instal `rtlsdr`), dan modul kernel yang bentrok di-blacklist.
 - **Log agent**: `journalctl -u ji-tu-agent -f`.
+
+## 11. Catatan deployment (temuan lapangan)
+
+Pelajaran dari implementasi nyata controller-agent. Mengikuti ini membuat clone
+dan deploy berikutnya mulus.
+
+- **Jalankan controller sebagai service, bukan manual.** `setup.sh --role=controller`
+  kini memasang service systemd `jitu` (auto-start + auto-restart, jalan sebagai user
+  pemanggil). Kelola dengan `sudo systemctl {start,restart,status} jitu` dan
+  `journalctl -u jitu -f`. Menjalankan manual dari terminal (`./start.sh`) rawan:
+  proses mati saat sesi tertutup, dan `git checkout` tidak otomatis termuat sampai
+  proses di-restart.
+- **Ubuntu butuh paket venv.** Sebelum `python3 -m venv`, paket `python3-venv`
+  (mis. `python3.12-venv`) harus terpasang. `setup.sh` menanganinya; jika memasang
+  manual: `sudo apt install python3-venv python3-pip`.
+- **Satu agent bisa melayani banyak controller (mis. primer + cadangan).** Tambahkan
+  SEMUA IP controller ke `allowed_ips` agent (eksak, dipisah koma, bukan CIDR).
+  Tarik data (PULL/dashboard) cukup izin IP; dorong data (PUSH) perlu api_key cocok.
+- **Push mode harus selaras di dua sisi.** Di `intercept_agent.cfg`: `push_enabled=true`,
+  `url` menunjuk controller aktif, dan `api_key` **non-kosong**. Controller MENOLAK push
+  bila api_key agent kosong atau tidak sama dengan yang tersimpan saat registrasi.
+  Endpoint: `POST {url}/controller/api/ingest` dengan header `X-API-Key`.
+- **Registrasi agent via CLI (idempoten), dijalankan di mesin controller:**
+  ```bash
+  venv/bin/python scripts/register_agent.py Ji-Tu-01 http://<ip-agent>:8020 --api-key <key>
+  ```
+  Alternatif UI: `/controller/manage`.
+- **Operasi SDR: pakai halaman controller, bukan halaman SDR lokal.** Controller murni
+  dashboard tak punya SDR, jadi menu "Spectrum Waterfall / Local SDR" tidak jalan di
+  sana. Operasikan SDR agent lewat `/controller/manage` dan `/controller/monitor`
+  (controller mem-proxy start/stop/stream mode ke agent). Spectrum waterfall dan tuning
+  real-time BUKAN mode agent; itu fitur SDR lokal yang butuh aplikasi penuh di mesin
+  yang SDR-nya tertancap langsung.
+- **Pindah/ganti controller.** Ubah `url` push di tiap agent ke controller baru lalu
+  `sudo systemctl restart ji-tu-agent`; daftarkan agent di controller baru; pastikan
+  `allowed_ips` agent memuat IP controller baru.
+- **Baca DB saat service hidup.** SQLite memakai mode WAL; `sqlite3` CLI bisa tampak
+  kosong saat service memegang lock. Baca lewat aplikasi (`utils.database.get_db()`),
+  bukan hanya file `intercept.db` mentah.
