@@ -167,6 +167,7 @@ class AgentConfig:
             "tscm": True,
             "satellite": True,
             "listening_post": True,
+            "sweep": True,
         }
 
     def load_from_file(self, filepath: str) -> bool:
@@ -536,6 +537,17 @@ class ModeManager:
             except Exception as e:
                 logger.warning(f"SDR device detection failed: {e}")
 
+        # Ji-Tu: mode sweep spektrum (hackrf_sweep) - dapat dioperasikan remote
+        # dari controller. Tersedia bila tool hackrf_sweep ada DAN ada perangkat HackRF.
+        _hackrf_present = any(
+            (d.get("sdr_type") == "hackrf" or d.get("driver") == "hackrf")
+            for d in capabilities.get("devices", [])
+        )
+        _sweep_ready = bool(shutil.which("hackrf_sweep")) and _hackrf_present
+        capabilities["modes"]["sweep"] = (
+            _sweep_ready if config.modes_enabled.get("sweep", True) else False
+        )
+
         self._capabilities = capabilities
         return capabilities
 
@@ -734,6 +746,15 @@ class ModeManager:
                 "bt_devices": list(self.bluetooth_devices.values()),
                 "rf_signals": getattr(self, "tscm_rf_signals", []),
             }
+        elif mode == "sweep":
+            points = self.data_snapshots.get("sweep", [])
+            data["data"] = {"spectrum": points, "points": len(points)}
+            if points:
+                peak = max(points, key=lambda p: p["power_db"])
+                data["data"]["peak_freq_mhz"] = peak["freq_mhz"]
+                data["data"]["peak_power_db"] = peak["power_db"]
+                data["data"]["freq_min_mhz"] = points[0]["freq_mhz"]
+                data["data"]["freq_max_mhz"] = points[-1]["freq_mhz"]
         elif mode == "listening_post":
             data["data"] = {
                 "activity": getattr(self, "listening_post_activity", []),
@@ -940,6 +961,7 @@ class ModeManager:
             "tscm": self._start_tscm,
             "satellite": self._start_satellite,
             "listening_post": self._start_listening_post,
+            "sweep": self._start_sweep,
         }
 
         handler = handlers.get(mode)
@@ -3027,6 +3049,113 @@ class ModeManager:
     # -------------------------------------------------------------------------
     # TSCM MODE (Technical Surveillance Countermeasures)
     # -------------------------------------------------------------------------
+
+    def _start_sweep(self, params: dict) -> dict:
+        """Ji-Tu: sapuan spektrum lebar via hackrf_sweep, dapat dipicu remote dari controller.
+
+        Params (opsional): start_mhz, stop_mhz, bin_hz, lna_gain, vga_gain, one_shot.
+        Default 2400-2483 MHz, bin 100 kHz. Hasil tersedia di GET /sweep/data.
+        """
+        if not shutil.which("hackrf_sweep"):
+            return {"status": "error",
+                    "message": "hackrf_sweep not found. Pasang paket hackrf di agent (apt install hackrf)."}
+        try:
+            f_min = int(float(params.get("start_mhz", params.get("fmin_mhz", 2400))))
+            f_max = int(float(params.get("stop_mhz", params.get("fmax_mhz", 2483))))
+        except (TypeError, ValueError):
+            return {"status": "error", "message": "start_mhz/stop_mhz harus angka (MHz)"}
+        if not (1 <= f_min < f_max <= 7250):
+            return {"status": "error",
+                    "message": "rentang tidak valid: 1 <= start_mhz < stop_mhz <= 7250"}
+        try:
+            bin_hz = int(float(params.get("bin_hz", 100000)))
+        except (TypeError, ValueError):
+            bin_hz = 100000
+        bin_hz = max(2445, min(bin_hz, 5000000))
+        try:
+            lna = max(0, min(40, int(params.get("lna_gain", 24))))
+            vga = max(0, min(62, int(params.get("vga_gain", 20))))
+        except (TypeError, ValueError):
+            lna, vga = 24, 20
+        one_shot = bool(params.get("one_shot", False))
+
+        cmd = ["hackrf_sweep", "-f", f"{f_min}:{f_max}", "-w", str(bin_hz),
+               "-l", str(lna), "-g", str(vga)]
+        if one_shot:
+            cmd.append("-1")
+        logger.info(f"Starting hackrf sweep: {' '.join(cmd)}")
+        try:
+            proc = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                text=True, bufsize=1, start_new_session=True,
+            )
+        except Exception as e:
+            return _error_result(e)
+        self.processes["sweep"] = proc
+        thread = threading.Thread(target=self._sweep_output_reader, args=(proc,), daemon=True)
+        thread.start()
+        self.output_threads["sweep"] = thread
+        return {
+            "status": "started",
+            "mode": "sweep",
+            "range_mhz": [f_min, f_max],
+            "bin_hz": bin_hz,
+            "lna_gain": lna,
+            "vga_gain": vga,
+            "one_shot": one_shot,
+        }
+
+    def _sweep_output_reader(self, proc: subprocess.Popen):
+        """Parse CSV hackrf_sweep menjadi spektrum {freq_mhz, power_db} per satu sapuan penuh."""
+        mode = "sweep"
+        stop_event = self.stop_events.get(mode)
+        spectrum: dict[float, float] = {}
+        prev_low = None
+        try:
+            for line in proc.stdout:
+                if stop_event and stop_event.is_set():
+                    break
+                parts = line.split(",")
+                if len(parts) < 7:
+                    continue
+                try:
+                    hz_low = float(parts[2])
+                    hz_bin = float(parts[4])
+                    dbs = [float(x) for x in parts[6:]]
+                except ValueError:
+                    continue
+                # Satu sapuan penuh selesai saat frekuensi awal turun kembali ke bawah.
+                if prev_low is not None and hz_low < prev_low and spectrum:
+                    self._publish_sweep(spectrum)
+                    spectrum = {}
+                prev_low = hz_low
+                for i, db in enumerate(dbs):
+                    fmhz = round((hz_low + (i + 0.5) * hz_bin) / 1e6, 3)
+                    spectrum[fmhz] = round(db, 1)
+        except (ValueError, OSError):
+            pass
+        finally:
+            if spectrum:
+                self._publish_sweep(spectrum)
+
+    def _publish_sweep(self, spectrum: dict):
+        """Simpan snapshot spektrum terurut dan antre ringkasan untuk push."""
+        points = [{"freq_mhz": f, "power_db": spectrum[f]} for f in sorted(spectrum)]
+        self.data_snapshots["sweep"] = points
+        if not points:
+            return
+        peak = max(points, key=lambda p: p["power_db"])
+        summary = {
+            "points": len(points),
+            "peak_freq_mhz": peak["freq_mhz"],
+            "peak_power_db": peak["power_db"],
+            "freq_min_mhz": points[0]["freq_mhz"],
+            "freq_max_mhz": points[-1]["freq_mhz"],
+        }
+        q = self.data_queues.get("sweep")
+        if q is not None:
+            with contextlib.suppress(Exception):
+                q.put_nowait(summary)
 
     def _start_tscm(self, params: dict) -> dict:
         """Start TSCM scanning - uses existing Intercept scanning functions."""
