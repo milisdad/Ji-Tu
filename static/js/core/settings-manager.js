@@ -8,7 +8,7 @@ const Settings = {
         'offline.enabled': false,
         'offline.assets_source': 'local',
         'offline.fonts_source': 'local',
-        'offline.tile_provider': 'esri_world',
+        'offline.tile_provider': 'openstreetmap',
         'offline.tile_server_url': '',
         'offline.stadia_key': '',
         'offline.carto_key': '',

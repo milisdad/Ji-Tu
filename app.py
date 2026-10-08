@@ -242,7 +242,7 @@ def inject_offline_settings():
             "enabled": get_setting("offline.enabled", False),
             "assets_source": assets_source,
             "fonts_source": fonts_source,
-            "tile_provider": get_setting("offline.tile_provider", "esri_world"),
+            "tile_provider": get_setting("offline.tile_provider", "openstreetmap"),
             "tile_server_url": get_setting("offline.tile_server_url", ""),
         }
     }
