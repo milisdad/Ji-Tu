@@ -169,6 +169,9 @@ const SubGhz = (function() {
         const hackrfKnownDisconnected = hackrfConnectedRaw === false;
         const hackrfDetectUnknown = hackrfAvailable && !hackrfConnected && !hackrfKnownDisconnected;
         hackrfDetected = hackrfConnected;
+        if (!hackrfDetected && !subghzRemoteAgentId) {
+            findRemoteHackrfAgent().then(function (id) { subghzRemoteAgentId = id; });
+        }
         rtl433Detected = !!data.rtl433_available;
         sweepDetected = !!data.sweep_available;
 
@@ -770,6 +773,12 @@ const SubGhz = (function() {
             subghzRemoteAgentId = id;
             cb('/controller/agents/' + id);
         });
+    }
+
+    // Prefiks URL subghz dgn agen remote bila controller tanpa HackRF lokal.
+    function subghzApi(path) {
+        if (!hackrfDetected && subghzRemoteAgentId) return '/controller/agents/' + subghzRemoteAgentId + path;
+        return path;
     }
 
     function startRx() {
@@ -1481,7 +1490,7 @@ const SubGhz = (function() {
         if (overlay && overlay.parentElement !== document.body) document.body.appendChild(overlay);
         if (overlay) overlay.classList.add('active');
 
-        fetch(`/subghz/captures/${encodeURIComponent(captureId)}`)
+        fetch(subghzApi(`/subghz/captures/${encodeURIComponent(captureId)}`))
             .then(r => r.json())
             .then(data => {
                 if (data.capture) {
@@ -1535,7 +1544,7 @@ const SubGhz = (function() {
             trimBtn.textContent = 'Trimming...';
         }
 
-        fetch(`/subghz/captures/${encodeURIComponent(pendingTxCaptureId)}/trim`, {
+        fetch(subghzApi(`/subghz/captures/${encodeURIComponent(pendingTxCaptureId)}/trim`), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2205,7 +2214,7 @@ const SubGhz = (function() {
     // ------ CAPTURES LIBRARY ------
 
     function loadCaptures() {
-        fetch('/subghz/captures')
+        fetch(subghzApi('/subghz/captures'))
             .then(r => r.json())
             .then(data => {
                 const captures = data.captures || [];
@@ -2394,7 +2403,7 @@ const SubGhz = (function() {
         if (!confirmed) return;
 
         Promise.all(
-            ids.map(id => fetch(`/subghz/captures/${encodeURIComponent(id)}`, { method: 'DELETE' }))
+            ids.map(id => fetch(subghzApi(`/subghz/captures/${encodeURIComponent(id)}`), { method: 'DELETE' }))
         )
             .then(() => {
                 selectedCaptureIds.clear();
@@ -2413,7 +2422,7 @@ const SubGhz = (function() {
             confirmClass: 'btn-danger'
         });
         if (!confirmed) return;
-        fetch(`/subghz/captures/${encodeURIComponent(id)}`, { method: 'DELETE' })
+        fetch(subghzApi(`/subghz/captures/${encodeURIComponent(id)}`), { method: 'DELETE' })
             .then(r => r.json())
             .then(() => loadCaptures())
             .catch(err => alert('Error: ' + err.message));
@@ -2422,7 +2431,7 @@ const SubGhz = (function() {
     function renameCapture(id) {
         const label = prompt('Enter label for this capture:');
         if (label === null) return;
-        fetch(`/subghz/captures/${encodeURIComponent(id)}`, {
+        fetch(subghzApi(`/subghz/captures/${encodeURIComponent(id)}`), {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ label: label }),
@@ -2433,7 +2442,7 @@ const SubGhz = (function() {
     }
 
     function downloadCapture(id) {
-        window.open(`/subghz/captures/${encodeURIComponent(id)}/download`, '_blank');
+        window.open(subghzApi(`/subghz/captures/${encodeURIComponent(id)}/download`), '_blank');
     }
 
     // ------ CAPTURE INSPECTOR ------
@@ -2462,7 +2471,7 @@ const SubGhz = (function() {
         window.addEventListener('resize', drawInspectPlot);
         bindInspectCanvas();
 
-        fetch(`/subghz/captures/${encodeURIComponent(captureId)}`)
+        fetch(subghzApi(`/subghz/captures/${encodeURIComponent(captureId)}`))
             .then(r => r.json())
             .then(data => {
                 if (!data.capture) throw new Error(data.message || 'Capture not found');
@@ -2489,7 +2498,7 @@ const SubGhz = (function() {
         const query = value === '' || value === undefined ? '' : `?burst=${encodeURIComponent(value)}`;
         setInspectStatus('Analyzing pulses with rtl_433...');
         renderInspectResults(null);
-        fetch(`/subghz/captures/${encodeURIComponent(inspectCapture.id)}/inspect${query}`)
+        fetch(subghzApi(`/subghz/captures/${encodeURIComponent(inspectCapture.id)}/inspect${query}`))
             .then(r => r.json())
             .then(data => {
                 if (requestId !== inspectRequestId) return;
