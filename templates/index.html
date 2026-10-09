@@ -300,6 +300,9 @@
                 </button>
             </div>
 
+            <!-- Ji-Tu: panel status agen (diisi agents_status.js; sembunyi bila bukan controller) -->
+            <div id="agentsStatusPanel" class="welcome-agents" style="display:none;"></div>
+
             <!-- Main Content Grid -->
             <div class="welcome-content">
                 <!-- Left: Changelog -->
@@ -3498,6 +3501,7 @@
     <script src="{{ url_for('static', filename='js/modes/device-recon.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modes/tscm.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modes/subghz_remote_hint.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/agents_status.js') }}"></script>
 
     {% include 'partials/help-modal.html' %}
 
