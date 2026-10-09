@@ -1,7 +1,8 @@
 /*
  * Ji-Tu: panel status agen di halaman depan (welcome page).
- * Menampilkan tiap agen menyala/mati + mode/servis yang bisa dioperasikan,
- * plus tautan cepat. Defensif: diam bila bukan controller / tak ada agent.
+ * Tiap agen menyala/mati + mode/servis yang bisa dioperasikan + tautan cepat.
+ * Bisa di-minimize (status disimpan di localStorage). Defensif: diam bila bukan
+ * controller / tak ada agent.
  */
 (function () {
     "use strict";
@@ -11,6 +12,7 @@
         satellite: "Satelit", dsc: "DSC", rtlamr: "Meters", listening_post: "Listening Post",
         sweep: "Sweep HackRF"
     };
+    var COLLAPSE_KEY = "jitu-agents-collapsed";
     var panel = null;
 
     function esc(s) {
@@ -19,14 +21,38 @@
         });
     }
 
+    function isCollapsed() {
+        try { return localStorage.getItem(COLLAPSE_KEY) === "1"; } catch (e) { return false; }
+    }
+    function setCollapsed(v) {
+        try { localStorage.setItem(COLLAPSE_KEY, v ? "1" : "0"); } catch (e) { /* abaikan */ }
+    }
+    function applyCollapsed() {
+        if (!panel) return;
+        var collapsed = isCollapsed();
+        var grid = panel.querySelector(".wa-grid");
+        var btn = panel.querySelector(".wa-toggle");
+        if (grid) grid.style.display = collapsed ? "none" : "";
+        if (btn) { btn.textContent = collapsed ? "+" : "–"; btn.title = collapsed ? "Perbesar" : "Perkecil"; }
+        panel.classList.toggle("wa-collapsed", collapsed);
+    }
+    function toggleCollapse() {
+        setCollapsed(!isCollapsed());
+        applyCollapsed();
+    }
+
     function injectStyle() {
         if (document.getElementById("wa-style")) return;
         var s = document.createElement("style");
         s.id = "wa-style";
         s.textContent = [
-            ".welcome-agents{max-width:900px;margin:0 auto 18px;padding:14px 16px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-secondary);}",
+            ".welcome-agents{max-width:900px;margin:0 auto 18px;padding:12px 16px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-secondary);}",
+            ".welcome-agents.wa-collapsed{padding:8px 16px;}",
             ".wa-head{font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:13px;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px;}",
+            ".wa-collapsed .wa-head{margin-bottom:0;}",
             ".wa-head .wa-count{font-weight:500;color:var(--text-secondary);text-transform:none;letter-spacing:0;font-size:12px;}",
+            ".wa-toggle{margin-left:auto;background:transparent;border:1px solid var(--border-color);color:var(--text-primary);border-radius:6px;cursor:pointer;width:28px;height:24px;line-height:1;font-size:15px;font-weight:700;flex:0 0 auto;}",
+            ".wa-toggle:hover{border-color:var(--accent-cyan);color:var(--accent-cyan);}",
             ".wa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}",
             ".wa-card{border:1px solid var(--border-color);border-radius:8px;padding:10px 12px;background:var(--bg-primary);}",
             ".wa-row{display:flex;align-items:center;gap:8px;}",
@@ -50,7 +76,7 @@
         if (!agents.length) { panel.style.display = "none"; return; }
         var online = agents.filter(function (a) { return a.healthy === true; }).length;
         var html = '<div class="wa-head">Agen Terhubung <span class="wa-count">' +
-            online + "/" + agents.length + " menyala</span></div><div class=\"wa-grid\">";
+            online + "/" + agents.length + ' menyala</span><button type="button" class="wa-toggle">–</button></div><div class="wa-grid">';
         agents.forEach(function (a) {
             var healthy = a.healthy === true;
             var caps = a.capabilities || {};
@@ -74,6 +100,9 @@
         html += "</div>";
         panel.innerHTML = html;
         panel.style.display = "block";
+        var btn = panel.querySelector(".wa-toggle");
+        if (btn) btn.onclick = toggleCollapse;
+        applyCollapsed();
     }
 
     function refresh() {
