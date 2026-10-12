@@ -2128,15 +2128,22 @@ ACARS: ${r.statistics.acarsMessages} messages`;
         }
 
         function checkAdsbTools(devices = []) {
+            // In distributed mode, remote agent SDRs are decoded on the agent nodes,
+            // not by local tools on the Controller. Only evaluate local devices.
+            const localDevices = (devices || []).filter((d) => !d.is_remote);
+            if (localDevices.length === 0) {
+                return;
+            }
+
             fetchJsonWithTimeout('/adsb/tools', {}, 3000)
                 .then(r => r.json())
                 .then(data => {
-                    const soapyTypes = (devices || [])
+                    const soapyTypes = localDevices
                         .filter((d) => ['hackrf', 'limesdr', 'airspy'].includes((d.sdr_type || '').toLowerCase()))
                         .map((d) => d.sdr_type);
                     // Only worth saying when no RTL-SDR can do ADS-B instead; starting on a
                     // SoapySDR device without readsb reports the same thing anyway
-                    const hasRtlSdr = (devices || []).some((d) => (d.sdr_type || 'rtlsdr').toLowerCase() === 'rtlsdr');
+                    const hasRtlSdr = localDevices.some((d) => (d.sdr_type || 'rtlsdr').toLowerCase() === 'rtlsdr');
                     if (!data.readsb && soapyTypes.length > 0 && !hasRtlSdr) {
                         showReadsbWarning(soapyTypes);
                     }
