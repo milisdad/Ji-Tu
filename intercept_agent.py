@@ -145,6 +145,8 @@ class AgentConfig:
         self.port: int = 8020
         self.allowed_ips: list[str] = []
         self.allow_cors: bool = False
+        self.default_lat: float = -7.7932
+        self.default_lon: float = 110.3309
 
         # Controller settings
         self.controller_url: str = ""
@@ -192,6 +194,10 @@ class AgentConfig:
                         self.allowed_ips = [ip.strip() for ip in ips.split(",")]
                 if parser.has_option("agent", "allow_cors"):
                     self.allow_cors = parser.getboolean("agent", "allow_cors")
+                if parser.has_option("agent", "default_lat"):
+                    self.default_lat = parser.getfloat("agent", "default_lat")
+                if parser.has_option("agent", "default_lon"):
+                    self.default_lon = parser.getfloat("agent", "default_lon")
 
             # Controller section
             if parser.has_section("controller"):
@@ -224,6 +230,8 @@ class AgentConfig:
             "port": self.port,
             "allowed_ips": self.allowed_ips,
             "allow_cors": self.allow_cors,
+            "default_lat": self.default_lat,
+            "default_lon": self.default_lon,
             "controller_url": self.controller_url,
             "push_enabled": self.push_enabled,
             "push_interval": self.push_interval,
@@ -240,18 +248,25 @@ config = AgentConfig()
 # =============================================================================
 
 
-class GPSManager:
-    """Manages GPS position via gpsd."""
+# Default coordinates: Program Studi Teknologi Informasi Unjaya (Kampus 1)
+DEFAULT_LATITUDE = -7.7932
+DEFAULT_LONGITUDE = 110.3309
 
-    def __init__(self):
+
+class GPSManager:
+    """Manages GPS position via gpsd with fallback to default coordinates."""
+
+    def __init__(self, default_lat: float = DEFAULT_LATITUDE, default_lon: float = DEFAULT_LONGITUDE):
         self._client = None
         self._position = None
         self._lock = threading.Lock()
         self._running = False
+        self.default_lat = default_lat
+        self.default_lon = default_lon
 
     @property
     def position(self) -> dict | None:
-        """Get current GPS position."""
+        """Get current GPS position or default coordinates (Unjaya)."""
         with self._lock:
             if self._position:
                 return {
@@ -262,7 +277,14 @@ class GPSManager:
                     "heading": self._position.heading,
                     "fix_quality": self._position.fix_quality,
                 }
-            return None
+            return {
+                "lat": self.default_lat,
+                "lon": self.default_lon,
+                "altitude": 0.0,
+                "speed": 0.0,
+                "heading": 0.0,
+                "fix_quality": 0,
+            }
 
     def start(self, host: str = "localhost", port: int = 2947) -> bool:
         """Start GPS client connection to gpsd."""
@@ -4274,12 +4296,15 @@ def main():
     print(f"  CORS:        {'Enabled' if config.allow_cors else 'Disabled'}")
 
     # Start GPS
+    gps_manager.default_lat = config.default_lat
+    gps_manager.default_lon = config.default_lon
+
     print()
     print("  Initializing GPS...")
     if gps_manager.start():
         print("  GPS:         Connected to gpsd")
     else:
-        print("  GPS:         Not available (gpsd not running)")
+        print(f"  GPS:         Default Unjaya ({gps_manager.default_lat}, {gps_manager.default_lon})")
     if config.allowed_ips:
         print(f"  Allowed IPs: {', '.join(config.allowed_ips)}")
     else:
