@@ -729,6 +729,14 @@ def ingest_push_data():
             }
         )
 
+        # If drone scan type, feed into drone correlator
+        if data.get("scan_type") == "drone":
+            try:
+                from routes.drone import ingest_drone_observations
+                ingest_drone_observations(data.get("payload", {}))
+            except Exception as d_err:
+                logger.debug(f"Drone push ingestion error: {d_err}")
+
         return jsonify({"status": "accepted", "payload_id": payload_id}), 202
 
     except Exception as e:

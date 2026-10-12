@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import platform
@@ -9,6 +10,7 @@ import queue
 import shutil
 import subprocess
 import threading
+from datetime import datetime, timezone
 
 from flask import Blueprint, Response, jsonify, request
 
@@ -16,6 +18,7 @@ import app as app_module
 from utils.constants import SSE_KEEPALIVE_INTERVAL, SSE_QUEUE_TIMEOUT
 from utils.drone import remote_id
 from utils.drone.correlator import DroneCorrelator
+from utils.drone.models import RFObservation, RemoteIDObservation
 from utils.drone.remote_id import RemoteIDScanner
 from utils.drone.rf_detector import RFDetector
 from utils.responses import api_error
@@ -34,6 +37,10 @@ _relay_thread: threading.Thread | None = None
 _drone_running = False
 _drone_vectors: list[str] = []  # the detection sources this run started
 _claimed_device: int | None = None
+_active_agent_id: int | str | None = None
+_active_agent_name: str | None = None
+_agent_poll_thread: threading.Thread | None = None
+_agent_poll_stop: threading.Event | None = None
 _drone_lock = threading.Lock()
 
 _SENTINEL = object()
@@ -68,6 +75,44 @@ def _ensure_workers() -> None:
 def devices():
     """Return available WiFi interfaces and SDR devices for drone detection."""
     result: dict = {"wifi_interfaces": [], "sdr_devices": []}
+    agents_list: list[dict] = []
+    try:
+        from utils.database import list_agents
+        for a in list_agents(active_only=True):
+            agents_list.append({
+                "id": a["id"],
+                "name": a["name"],
+                "ip_address": a["ip_address"],
+                "port": a["port"],
+            })
+    except Exception as exc:
+        logger.debug("Failed to list agents: %s", exc)
+
+    req_agent_id = request.args.get("agent_id")
+    if req_agent_id and req_agent_id != "local":
+        try:
+            from utils.database import get_agent
+            from utils.agent_client import create_client_from_agent
+            agent = get_agent(int(req_agent_id)) if req_agent_id.isdigit() else None
+            if agent:
+                client = create_client_from_agent(agent)
+                caps = client.get_capabilities()
+                ifaces = caps.get("interfaces", {})
+                wifi_list = ifaces.get("wifi_interfaces", [])
+                sdr_list = ifaces.get("sdr_devices", [])
+                return jsonify({
+                    "status": "ok",
+                    "devices": {
+                        "wifi_interfaces": wifi_list,
+                        "sdr_devices": sdr_list,
+                    },
+                    "agents": agents_list,
+                    "selected_agent": agent["name"],
+                    "running_as_root": True,
+                    "warnings": [],
+                })
+        except Exception as exc:
+            logger.warning("Error querying remote agent devices: %s", exc)
 
     # WiFi interfaces via iw/iwconfig
     if platform.system() == "Darwin":
@@ -161,6 +206,8 @@ def devices():
         {
             "status": "ok",
             "devices": result,
+            "agents": agents_list,
+            "selected_agent": "local",
             "running_as_root": running_as_root,
             "warnings": warnings,
         }
@@ -174,6 +221,8 @@ def status():
             "running": _drone_running,
             "vectors": list(_drone_vectors),
             "contact_count": len(_correlator.get_all()) if _correlator else 0,
+            "active_agent": _active_agent_name,
+            "active_agent_id": _active_agent_id,
         }
     )
 
@@ -185,6 +234,43 @@ def contacts():
     return jsonify(_correlator.get_all())
 
 
+def ingest_drone_observations(payload: dict) -> None:
+    """Ingest drone observations or contacts from remote agent push."""
+    _ensure_workers()
+    if not isinstance(payload, dict):
+        return
+    obs_list = payload.get("observations", [])
+    for obs_dict in obs_list:
+        freq = obs_dict.get("frequency_hz")
+        proto = obs_dict.get("protocol") or "UNKNOWN"
+        rssi = obs_dict.get("rssi") or -80.0
+        hw = obs_dict.get("hardware") or "HACKRF"
+        if freq and _correlator:
+            _correlator.process(
+                RFObservation(
+                    frequency_hz=int(freq),
+                    protocol=proto,
+                    rssi=float(rssi),
+                    hardware=hw,
+                    timestamp=datetime.now(timezone.utc),
+                )
+            )
+        elif obs_dict.get("serial_number") and _correlator:
+            _correlator.process(
+                RemoteIDObservation(
+                    source=obs_dict.get("source", "WIFI"),
+                    serial_number=obs_dict["serial_number"],
+                    operator_id=obs_dict.get("operator_id", ""),
+                    lat=float(obs_dict.get("lat", 0.0)),
+                    lon=float(obs_dict.get("lon", 0.0)),
+                    altitude_m=float(obs_dict.get("altitude_m", 0.0)),
+                    speed_ms=float(obs_dict.get("speed_ms", 0.0)),
+                    heading=float(obs_dict.get("heading", 0.0)),
+                    timestamp=datetime.now(timezone.utc),
+                )
+            )
+
+
 @drone_bp.route("/start", methods=["POST"])
 def start():
     """Start every detection source that can run, or fail naming why none can.
@@ -193,7 +279,7 @@ def start():
     433/868 MHz needs rtl_433 and a free RTL-SDR (claimed here), and
     2.4/5.8 GHz needs hackrf_sweep.
     """
-    global _drone_running, _claimed_device
+    global _drone_running, _claimed_device, _active_agent_id, _active_agent_name, _agent_poll_thread, _agent_poll_stop
     body = request.json or {}
     wifi_iface = body.get("wifi_iface") or None
     try:
@@ -201,11 +287,95 @@ def start():
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
     use_hackrf = bool(body.get("use_hackrf", True))
+    req_agent_id = body.get("agent_id")
 
     with _drone_lock:
         if _drone_running:
-            return jsonify({"status": "ok", "running": True, "vectors": list(_drone_vectors)})
+            return jsonify({"status": "ok", "running": True, "vectors": list(_drone_vectors), "agent": _active_agent_name})
 
+        # Remote agent detection path
+        if req_agent_id and req_agent_id != "local":
+            try:
+                from utils.database import get_agent
+                from utils.agent_client import create_client_from_agent
+                agent = get_agent(int(req_agent_id)) if str(req_agent_id).isdigit() else None
+                if not agent:
+                    return api_error(f"Agent '{req_agent_id}' not found", 404)
+
+                client = create_client_from_agent(agent)
+                res = client.start_mode("drone", {
+                    "use_hackrf": use_hackrf,
+                    "rtl_sdr_index": rtl_index,
+                    "wifi_iface": wifi_iface,
+                })
+                if res.get("status") not in ("started", "ok", "success"):
+                    msg = res.get("message") or res.get("error") or "Agent failed to start drone mode"
+                    return api_error(f"Failed on agent {agent['name']}: {msg}", 400, error_type="TOOL_MISSING")
+
+                _ensure_workers()
+                _active_agent_id = agent["id"]
+                _active_agent_name = agent["name"]
+                _drone_vectors[:] = res.get("vectors", [])
+                _drone_running = True
+
+                # Background poll loop to ingest live observations from agent
+                _agent_poll_stop = threading.Event()
+                def _poll_remote_agent():
+                    while not _agent_poll_stop.is_set():
+                        try:
+                            data_res = client.get_mode_data("drone")
+                            data = data_res.get("data", {}) if isinstance(data_res, dict) else {}
+                            obs_list = data.get("observations", [])
+                            for obs_dict in obs_list:
+                                freq = obs_dict.get("frequency_hz")
+                                proto = obs_dict.get("protocol") or "UNKNOWN"
+                                rssi = obs_dict.get("rssi") or -80.0
+                                hw = obs_dict.get("hardware") or "HACKRF"
+                                if freq and _correlator:
+                                    _correlator.process(
+                                        RFObservation(
+                                            frequency_hz=int(freq),
+                                            protocol=proto,
+                                            rssi=float(rssi),
+                                            hardware=hw,
+                                            timestamp=datetime.now(timezone.utc),
+                                        )
+                                    )
+                                elif obs_dict.get("serial_number") and _correlator:
+                                    _correlator.process(
+                                        RemoteIDObservation(
+                                            source=obs_dict.get("source", "WIFI"),
+                                            serial_number=obs_dict["serial_number"],
+                                            operator_id=obs_dict.get("operator_id", ""),
+                                            lat=float(obs_dict.get("lat", 0.0)),
+                                            lon=float(obs_dict.get("lon", 0.0)),
+                                            altitude_m=float(obs_dict.get("altitude_m", 0.0)),
+                                            speed_ms=float(obs_dict.get("speed_ms", 0.0)),
+                                            heading=float(obs_dict.get("heading", 0.0)),
+                                            timestamp=datetime.now(timezone.utc),
+                                        )
+                                    )
+                        except Exception as err:
+                            logger.debug("Error polling agent drone data: %s", err)
+                        _agent_poll_stop.wait(1.5)
+
+                _agent_poll_thread = threading.Thread(target=_poll_remote_agent, daemon=True)
+                _agent_poll_thread.start()
+
+                logger.info("Drone detection started on remote agent %s: %s", agent["name"], ", ".join(_drone_vectors))
+                return jsonify({
+                    "status": "ok",
+                    "running": True,
+                    "agent": agent["name"],
+                    "agent_id": agent["id"],
+                    "vectors": list(_drone_vectors),
+                    "unavailable": res.get("unavailable", []),
+                })
+            except Exception as exc:
+                logger.exception("Remote drone start error")
+                return api_error(f"Cannot start drone on agent: {exc}", 500)
+
+        # Local detection path
         vectors, unavailable = [], []
         if not remote_id.SCAPY_AVAILABLE:
             unavailable.append("Remote ID: scapy is not installed")
@@ -246,15 +416,32 @@ def start():
         _claimed_device = claimed
         _drone_vectors[:] = vectors
         _drone_running = True
-        logger.info("Drone detection started: %s", ", ".join(vectors))
+        _active_agent_id = None
+        _active_agent_name = "Local"
+        logger.info("Drone detection started locally: %s", ", ".join(vectors))
 
     return jsonify({"status": "ok", "running": True, "vectors": vectors, "unavailable": unavailable})
 
 
 @drone_bp.route("/stop", methods=["POST"])
 def stop():
-    global _drone_running, _claimed_device
+    global _drone_running, _claimed_device, _active_agent_id, _active_agent_name, _agent_poll_thread, _agent_poll_stop
     with _drone_lock:
+        if _active_agent_id:
+            try:
+                from utils.database import get_agent
+                from utils.agent_client import create_client_from_agent
+                agent = get_agent(int(_active_agent_id)) if str(_active_agent_id).isdigit() else None
+                if agent:
+                    client = create_client_from_agent(agent)
+                    client.stop_mode("drone")
+            except Exception as exc:
+                logger.warning("Error stopping drone mode on agent: %s", exc)
+            if _agent_poll_stop:
+                _agent_poll_stop.set()
+            _active_agent_id = None
+            _active_agent_name = None
+
         if _remote_id_scanner:
             _remote_id_scanner.stop()
         if _rf_detector:

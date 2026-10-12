@@ -729,6 +729,10 @@ class ModeManager:
                 info["signal_count"] = len(getattr(self, "listening_post_activity", []))
                 info["current_freq"] = getattr(self, "listening_post_current_freq", 0)
                 info["freqs_scanned"] = getattr(self, "listening_post_freqs_scanned", 0)
+            elif mode == "drone":
+                info["vectors"] = list(getattr(self, "drone_vectors", []))
+                info["contact_count"] = len(self.drone_correlator.get_all()) if getattr(self, "drone_correlator", None) else 0
+                info["observation_count"] = len(getattr(self, "drone_observations", []))
             return info
         return {"running": False}
 
@@ -783,6 +787,14 @@ class ModeManager:
                 "current_freq": getattr(self, "listening_post_current_freq", 0),
                 "freqs_scanned": getattr(self, "listening_post_freqs_scanned", 0),
                 "signal_count": len(getattr(self, "listening_post_activity", [])),
+            }
+        elif mode == "drone":
+            contacts = self.drone_correlator.get_all() if getattr(self, "drone_correlator", None) else []
+            data["data"] = {
+                "contacts": contacts,
+                "observations": list(getattr(self, "drone_observations", []))[-50:],
+                "vectors": list(getattr(self, "drone_vectors", [])),
+                "contact_count": len(contacts),
             }
         elif mode == "pager":
             # Return recent pager messages
@@ -984,6 +996,7 @@ class ModeManager:
             "satellite": self._start_satellite,
             "listening_post": self._start_listening_post,
             "sweep": self._start_sweep,
+            "drone": self._start_drone,
         }
 
         handler = handlers.get(mode)
@@ -1101,6 +1114,16 @@ class ModeManager:
                     except subprocess.TimeoutExpired:
                         tcp_proc.kill()
                 del self.processes["rtlamr_tcp"]
+        elif mode == "drone":
+            if getattr(self, "drone_rf_detector", None):
+                self.drone_rf_detector.stop()
+                self.drone_rf_detector = None
+            if getattr(self, "drone_remote_id", None):
+                self.drone_remote_id.stop()
+                self.drone_remote_id = None
+            self.drone_correlator = None
+            self.drone_vectors = []
+            self.drone_observations = []
 
         return {"status": "stopped", "mode": mode}
 
@@ -3183,6 +3206,135 @@ class ModeManager:
         if q is not None:
             with contextlib.suppress(Exception):
                 q.put_nowait(summary)
+
+    # -------------------------------------------------------------------------
+    # DRONE INTELLIGENCE MODE (Remote ID, 433/868 MHz, 2.4/5.8 GHz HackRF)
+    # -------------------------------------------------------------------------
+
+    def _start_drone(self, params: dict) -> dict:
+        """Start multi-vector UAV detection on agent node."""
+        use_hackrf = bool(params.get("use_hackrf", True))
+        rtl_index_val = params.get("rtl_sdr_index", None)
+        wifi_iface = params.get("wifi_iface", None)
+
+        try:
+            from utils.drone.rf_detector import RFDetector
+            from utils.drone.correlator import DroneCorrelator
+            from utils.drone.remote_id import RemoteIDScanner, SCAPY_AVAILABLE
+        except ImportError as e:
+            logger.error(f"Cannot import drone modules: {e}")
+            return {"status": "error", "message": f"Drone modules unavailable: {e}"}
+
+        vectors, unavailable = [], []
+
+        # 1. Remote ID (WiFi / BLE)
+        if not SCAPY_AVAILABLE:
+            unavailable.append("Remote ID: scapy is not installed")
+        elif not wifi_iface:
+            unavailable.append("Remote ID: no Wi-Fi interface selected")
+        else:
+            vectors.append("REMOTE_ID")
+
+        # 2. 433 / 868 MHz (RTL-SDR)
+        claimed = None
+        if rtl_index_val is not None and rtl_index_val != "":
+            try:
+                idx = int(rtl_index_val)
+                if not shutil.which("rtl_433"):
+                    unavailable.append("433/868 MHz: rtl_433 not found")
+                else:
+                    in_use = self.get_sdr_in_use(idx)
+                    if in_use and in_use != "drone":
+                        unavailable.append(f"433/868 MHz: SDR device {idx} in use by {in_use}")
+                    else:
+                        claimed = idx
+                        vectors.append("RTL433")
+            except (ValueError, TypeError):
+                pass
+
+        # 3. HackRF (2.4 / 5.8 GHz)
+        if not use_hackrf:
+            pass
+        elif not shutil.which("hackrf_sweep"):
+            unavailable.append("2.4/5.8 GHz: hackrf_sweep not found")
+        else:
+            vectors.append("HACKRF")
+
+        if not vectors:
+            return {
+                "status": "error",
+                "message": "No drone detection source is available. " + "; ".join(unavailable) + ".",
+                "unavailable": unavailable,
+            }
+
+        obs_queue = queue.Queue(maxsize=512)
+        out_queue = queue.Queue(maxsize=512)
+        correlator = DroneCorrelator(output_queue=out_queue)
+
+        rf_det = None
+        if claimed is not None or "HACKRF" in vectors:
+            rf_det = RFDetector(output_queue=obs_queue)
+            rf_det.start(rtl_sdr_index=claimed, use_hackrf="HACKRF" in vectors)
+
+        remote_id_scanner = None
+        if "REMOTE_ID" in vectors:
+            remote_id_scanner = RemoteIDScanner(output_queue=obs_queue)
+            remote_id_scanner.start(wifi_iface=wifi_iface)
+
+        self.drone_correlator = correlator
+        self.drone_rf_detector = rf_det
+        self.drone_remote_id = remote_id_scanner
+        self.drone_vectors = vectors
+        self.drone_observations = []
+
+        stop_evt = self.stop_events.get("drone")
+        if not stop_evt:
+            stop_evt = threading.Event()
+            self.stop_events["drone"] = stop_evt
+
+        def _drone_loop():
+            while not stop_evt.is_set():
+                try:
+                    obs = obs_queue.get(timeout=0.5)
+                    if obs is None:
+                        break
+                    correlator.process(obs)
+                    ts = getattr(obs, "timestamp", None)
+                    obs_dict = {
+                        "timestamp": ts.isoformat() if isinstance(ts, datetime) else str(ts or datetime.now(timezone.utc).isoformat()),
+                        "hardware": getattr(obs, "hardware", "UNKNOWN"),
+                        "frequency_hz": getattr(obs, "frequency_hz", None),
+                        "protocol": getattr(obs, "protocol", None),
+                        "rssi": getattr(obs, "rssi", None),
+                    }
+                    if hasattr(obs, "serial_number"):
+                        obs_dict["serial_number"] = obs.serial_number
+                        obs_dict["source"] = getattr(obs, "source", "WIFI")
+                        obs_dict["lat"] = getattr(obs, "lat", None)
+                        obs_dict["lon"] = getattr(obs, "lon", None)
+                    self.drone_observations.append(obs_dict)
+                    if len(self.drone_observations) > 200:
+                        self.drone_observations = self.drone_observations[-200:]
+                except queue.Empty:
+                    continue
+                except Exception as err:
+                    logger.debug(f"Drone observation processing error: {err}")
+
+            if rf_det:
+                rf_det.stop()
+            if remote_id_scanner:
+                remote_id_scanner.stop()
+
+        t = threading.Thread(target=_drone_loop, daemon=True)
+        t.start()
+        self.output_threads["drone"] = t
+
+        return {
+            "status": "started",
+            "mode": "drone",
+            "vectors": vectors,
+            "unavailable": unavailable,
+        }
 
     def _start_tscm(self, params: dict) -> dict:
         """Start TSCM scanning - uses existing Intercept scanning functions."""

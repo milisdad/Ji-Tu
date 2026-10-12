@@ -40,6 +40,7 @@ EXTRA_MODE_TOOLS = {
     "dsc": ["rtl_fm"],
     "rtlamr": ["rtlamr"],
     "listening_post": ["rtl_fm"],
+    "sweep": ["hackrf_sweep"],
 }
 
 # Fallback tool checks when the dependencies module is unavailable.
@@ -57,6 +58,7 @@ FALLBACK_TOOL_CHECKS = {
     "satellite": [],
     "listening_post": ["rtl_fm"],
     "tscm": ["rtl_fm"],
+    "sweep": ["hackrf_sweep"],
 }
 
 
@@ -89,6 +91,9 @@ def detect_mode_availability(dep_status: dict | None = None) -> dict[str, bool]:
     for cap_mode, tools in EXTRA_MODE_TOOLS.items():
         modes[cap_mode] = all(check_tool(tool) for tool in tools) if tools else True
 
+    # Drone detection is ready if at least one RF vector tool is installed
+    modes["drone"] = bool(check_tool("hackrf_sweep") or check_tool("rtl_433"))
+
     return modes
 
 
@@ -106,6 +111,7 @@ def _detect_mode_availability_fallback() -> dict[str, bool]:
             modes[mode] = check_tool("dump1090") or check_tool("dump1090-fa") or check_tool("readsb")
         else:
             modes[mode] = all(check_tool(tool) for tool in tools)
+    modes["drone"] = bool(check_tool("hackrf_sweep") or check_tool("rtl_433"))
     return modes
 
 

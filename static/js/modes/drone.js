@@ -8,6 +8,9 @@ var DroneMode = (function () {
     var _initialized = false;
 
     function init() {
+        if (typeof refreshDroneDevices === 'function') {
+            refreshDroneDevices();
+        }
         if (_initialized) {
             _refreshStatus();
             return;
@@ -194,7 +197,7 @@ var DroneMode = (function () {
         fetch('/drone/status')
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                _setRunningUI(data.running);
+                _setRunningUI(data.running, data.active_agent);
                 _updateVectorPills(data.vectors || []);
             })
             .catch(function () {});
@@ -206,10 +209,11 @@ var DroneMode = (function () {
         var rtlVal = document.getElementById('droneRtlIndex')?.value;
         var rtlIndex = rtlVal !== '' && rtlVal != null ? parseInt(rtlVal, 10) : 0;
         var useHackrf = document.getElementById('droneUseHackrf')?.checked ?? true;
+        var agentVal = document.getElementById('droneAgentSelect')?.value || 'local';
         fetch('/drone/start', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ wifi_iface: iface, rtl_sdr_index: rtlIndex, use_hackrf: useHackrf }),
+            body: JSON.stringify({ agent_id: agentVal, wifi_iface: iface, rtl_sdr_index: rtlIndex, use_hackrf: useHackrf }),
         })
         .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
         .then(function (res) {
@@ -220,7 +224,7 @@ var DroneMode = (function () {
                 return;
             }
             _showStartNote(unavailable.length ? 'Started without ' + unavailable.join('; ') : '');
-            _setRunningUI(true);
+            _setRunningUI(true, data.agent);
             _refreshStatus();
         })
         .catch(function (err) { _showStartNote('Drone detection failed to start: ' + err.message); });
@@ -240,15 +244,23 @@ var DroneMode = (function () {
             .catch(function () {});
     }
 
-    function _setRunningUI(running) {
+    function _setRunningUI(running, activeAgent) {
         var startBtn = document.getElementById('droneStartBtn');
         var stopBtn = document.getElementById('droneStopBtn');
         var statusEl = document.getElementById('droneStatusText');
+        var agentSel = document.getElementById('droneAgentSelect');
         if (startBtn) startBtn.disabled = running;
         if (stopBtn) stopBtn.disabled = !running;
+        if (agentSel) agentSel.disabled = running;
         if (statusEl) {
-            statusEl.textContent = running ? 'Active' : 'Standby';
-            statusEl.style.color = running ? 'var(--accent-green)' : 'var(--accent-yellow)';
+            if (running) {
+                var label = activeAgent ? 'Active (' + activeAgent + ')' : 'Active';
+                statusEl.textContent = label;
+                statusEl.style.color = 'var(--accent-green)';
+            } else {
+                statusEl.textContent = 'Standby';
+                statusEl.style.color = 'var(--accent-yellow)';
+            }
         }
         // Sync global state for switchMode stop phase
         if (typeof isDroneRunning !== 'undefined') isDroneRunning = running;

@@ -995,11 +995,33 @@ document.addEventListener('keydown', function (e) {
 // ============================================
 var isDroneRunning = false;
 
-async function refreshDroneDevices() {
+async function refreshDroneDevices(agentId) {
     try {
-        const resp = await fetch('/drone/devices');
+        const url = agentId && agentId !== 'local' ? `/drone/devices?agent_id=${encodeURIComponent(agentId)}` : '/drone/devices';
+        const resp = await fetch(url);
         const data = await resp.json();
         const devs = data.devices || {};
+
+        // Populate Agent selector if present
+        const agentSel = document.getElementById('droneAgentSelect');
+        if (agentSel && data.agents && data.agents.length > 0) {
+            const currentVal = agentId || agentSel.value || 'local';
+            // Only rebuild options if options count changed or only has default
+            if (agentSel.options.length <= 1 || agentSel.options.length !== (data.agents.length + 1)) {
+                agentSel.innerHTML = '<option value="local">Local (Controller)</option>';
+                data.agents.forEach(ag => {
+                    const opt = document.createElement('option');
+                    opt.value = ag.id;
+                    opt.textContent = `${ag.name} (${ag.ip_address})`;
+                    agentSel.appendChild(opt);
+                });
+                agentSel.value = currentVal;
+            }
+            if (!agentSel.dataset.boundChange) {
+                agentSel.dataset.boundChange = '1';
+                agentSel.addEventListener('change', () => refreshDroneDevices(agentSel.value));
+            }
+        }
 
         const wifiSel = document.getElementById('droneWifiIface');
         if (wifiSel) {
@@ -1033,7 +1055,7 @@ async function refreshDroneDevices() {
 
         const warnEl = document.getElementById('droneDeviceWarnings');
         if (warnEl) {
-            if (!data.running_as_root) {
+            if (!data.running_as_root && (!agentId || agentId === 'local')) {
                 warnEl.textContent = 'Not running as root — WiFi monitor mode may be unavailable.';
                 warnEl.style.display = 'block';
             } else {
