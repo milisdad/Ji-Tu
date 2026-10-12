@@ -79,11 +79,16 @@ def devices():
     try:
         from utils.database import list_agents
         for a in list_agents(active_only=True):
+            base_url = a.get("base_url") or ""
+            host = base_url.replace("http://", "").replace("https://", "")
+            ip_addr = a.get("ip_address") or (host.split(":")[0] if host else "")
+            port = a.get("port") or (host.split(":")[1] if ":" in host else 8020)
             agents_list.append({
                 "id": a["id"],
                 "name": a["name"],
-                "ip_address": a["ip_address"],
-                "port": a["port"],
+                "ip_address": ip_addr,
+                "port": port,
+                "base_url": base_url,
             })
     except Exception as exc:
         logger.debug("Failed to list agents: %s", exc)
