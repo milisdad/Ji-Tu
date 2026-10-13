@@ -4026,6 +4026,33 @@ data_push_loop: DataPushLoop | None = None
 # =============================================================================
 
 
+# SubGHz SSE event stream subscribers
+_subghz_stream_subscribers: set[queue.Queue] = set()
+_subghz_stream_lock = threading.Lock()
+_agent_shutdown_requested = threading.Event()
+
+
+def _subghz_event_callback(event: dict) -> None:
+    """Callback invoked by SubGhzManager to forward events to SSE subscribers."""
+    with _subghz_stream_lock:
+        if not _subghz_stream_subscribers:
+            return
+        dead = []
+        for q in _subghz_stream_subscribers:
+            try:
+                q.put_nowait(event)
+            except queue.Full:
+                try:
+                    q.get_nowait()
+                    q.put_nowait(event)
+                except queue.Empty:
+                    pass
+            except Exception:
+                dead.append(q)
+        for q in dead:
+            _subghz_stream_subscribers.discard(q)
+
+
 class InterceptAgentHandler(BaseHTTPRequestHandler):
     """HTTP request handler for the agent API."""
 
@@ -4086,33 +4113,6 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
         self.end_headers()
-
-# SubGHz SSE event stream subscribers
-_subghz_stream_subscribers: set[queue.Queue] = set()
-_subghz_stream_lock = threading.Lock()
-_agent_shutdown_requested = threading.Event()
-
-
-def _subghz_event_callback(event: dict) -> None:
-    """Callback invoked by SubGhzManager to forward events to SSE subscribers."""
-    with _subghz_stream_lock:
-        if not _subghz_stream_subscribers:
-            return
-        dead = []
-        for q in _subghz_stream_subscribers:
-            try:
-                q.put_nowait(event)
-            except queue.Full:
-                try:
-                    q.get_nowait()
-                    q.put_nowait(event)
-                except queue.Empty:
-                    pass
-            except Exception:
-                dead.append(q)
-        for q in dead:
-            _subghz_stream_subscribers.discard(q)
-
 
     # --- Ji-Tu: SubGHz transceiver di agent (pakai ulang utils.subghz.SubGhzManager) ---
     def _subghz_mgr(self):
