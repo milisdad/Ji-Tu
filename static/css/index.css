@@ -7603,6 +7603,66 @@ body[data-mode="tscm"] {
     background: linear-gradient(180deg, rgba(245, 248, 253, 0.92) 0%, rgba(238, 243, 250, 0.94) 100%);
 }
 
+[data-theme="light"] .run-btn {
+    background: linear-gradient(180deg, rgba(31, 138, 87, 0.12) 0%, rgba(31, 138, 87, 0.20) 100%);
+    border: 1px solid rgba(31, 138, 87, 0.55);
+    color: #146c43;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(31, 138, 87, 0.12);
+}
+
+[data-theme="light"] .run-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, rgba(31, 138, 87, 0.22) 0%, rgba(31, 138, 87, 0.32) 100%);
+    border-color: #146c43;
+    color: #0c4a2d;
+    box-shadow: 0 2px 8px rgba(31, 138, 87, 0.20);
+    transform: translateY(-1px);
+}
+
+[data-theme="light"] .run-btn:active:not(:disabled) {
+    transform: translateY(0);
+    background: rgba(31, 138, 87, 0.25);
+}
+
+[data-theme="light"] .run-btn:disabled {
+    background: rgba(230, 235, 242, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+[data-theme="light"] .stop-btn {
+    background: linear-gradient(180deg, rgba(226, 93, 93, 0.10) 0%, rgba(226, 93, 93, 0.18) 100%);
+    border: 1px solid rgba(226, 93, 93, 0.50);
+    color: #b02a2a;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(226, 93, 93, 0.10);
+}
+
+[data-theme="light"] .stop-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, rgba(226, 93, 93, 0.20) 0%, rgba(226, 93, 93, 0.28) 100%);
+    border-color: #992323;
+    color: #881c1c;
+    box-shadow: 0 2px 8px rgba(226, 93, 93, 0.18);
+    transform: translateY(-1px);
+}
+
+[data-theme="light"] .stop-btn:active:not(:disabled) {
+    transform: translateY(0);
+    background: rgba(226, 93, 93, 0.25);
+}
+
+[data-theme="light"] .stop-btn:disabled {
+    background: rgba(230, 235, 242, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
 [data-theme="light"] .output-panel {
     background: linear-gradient(180deg, rgba(250, 252, 255, 0.99) 0%, rgba(245, 248, 253, 0.99) 100%);
 }

@@ -629,6 +629,17 @@ header #runStateChips > * {
     display: none;
 }
 
+[data-theme="light"] .map-waiting {
+    background: rgba(244, 247, 251, 0.94);
+    border: 1px dashed rgba(0, 96, 48, 0.32);
+    color: var(--text-secondary);
+    box-shadow: 0 4px 16px rgba(18, 40, 66, 0.12);
+}
+
+[data-theme="light"] .map-waiting strong {
+    color: var(--text-primary);
+}
+
 /* Header counts: what is in view, as chips that open their mode (run-state.js) */
 #runStateSummary {
     display: inline-flex;
