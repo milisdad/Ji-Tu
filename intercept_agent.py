@@ -27,6 +27,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs, urlparse
@@ -4289,6 +4290,36 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
         except Exception as e:
             self._send_error(f"download failed: {e}", 500)
 
+    def _get_session_status(self) -> dict:
+        """Inspect active or latest session directory."""
+        sessions_dir = Path.home() / "Ji-Tu" / "data" / "sessions"
+        if not sessions_dir.exists():
+            sessions_dir = Path(__file__).resolve().parent / "data" / "sessions"
+        if not sessions_dir.exists():
+            return {"active": False, "session_id": None, "files": {}}
+
+        session_folders = sorted(sessions_dir.glob("session_*"), reverse=True)
+        if not session_folders:
+            return {"active": False, "session_id": None, "files": {}}
+
+        latest = session_folders[0]
+        files_info = {}
+        for p in latest.iterdir():
+            if p.is_file():
+                files_info[p.name] = {
+                    "size": p.stat().st_size,
+                    "modified": p.stat().st_mtime,
+                }
+
+        status_file = latest / "session.status"
+        status_text = status_file.read_text(errors="replace") if status_file.exists() else ""
+        return {
+            "active": "completed" not in status_text.lower(),
+            "session_id": latest.name,
+            "files": files_info,
+            "status_text": status_text,
+        }
+
     def do_DELETE(self):
         """Handle DELETE (subghz captures)."""
         if not self._check_ip_allowed():
@@ -4352,6 +4383,9 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
 
         elif path == "/subghz/status":
             self._send_json(self._subghz_status())
+
+        elif path == "/session/status":
+            self._send_json(self._get_session_status())
 
         elif path == "/subghz/stream":
             self._handle_subghz_stream()

@@ -830,6 +830,54 @@ def stream_all_agents():
 
 
 # =============================================================================
+# Monitoring Session Status
+# =============================================================================
+
+
+@controller_bp.route("/session/status", methods=["GET"])
+def get_session_status():
+    """Return active or latest monitoring session status across all agents."""
+    import json
+    from pathlib import Path
+    from flask import current_app
+
+    sessions_dir = Path(current_app.root_path) / "data" / "sessions"
+    manifest = {}
+    if sessions_dir.exists():
+        session_folders = sorted(sessions_dir.glob("session_*"), reverse=True)
+        if session_folders:
+            mf = session_folders[0] / "manifest.json"
+            if mf.exists():
+                try:
+                    with open(mf) as f:
+                        manifest = json.load(f)
+                except Exception:
+                    pass
+
+    agents_data = {}
+    for agent in list_agents(active_only=True):
+        aid = agent["id"]
+        base_url = agent["base_url"].rstrip("/")
+        headers = {}
+        key = get_agent_api_key(aid)
+        if key:
+            headers["X-API-Key"] = key
+        try:
+            r = requests.get(f"{base_url}/session/status", headers=headers, timeout=1.5)
+            if r.ok:
+                agents_data[agent["name"]] = r.json()
+        except Exception:
+            pass
+
+    return jsonify({
+        "status": "success",
+        "manifest": manifest,
+        "agents": agents_data,
+        "server_time": time.time(),
+    })
+
+
+# =============================================================================
 # Agent Management Page
 # =============================================================================
 
