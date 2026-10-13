@@ -20,7 +20,7 @@ from collections.abc import Generator
 from datetime import datetime, timezone
 
 import requests
-from flask import Blueprint, Response, jsonify, redirect, request, session, url_for, stream_with_context
+from flask import Blueprint, Response, jsonify, redirect, request, send_file, session, url_for, stream_with_context
 
 from utils.agent_client import AgentClient, AgentConnectionError, AgentHTTPError, create_client_from_agent
 from utils.database import (
@@ -874,6 +874,86 @@ def get_session_status():
         "manifest": manifest,
         "agents": agents_data,
         "server_time": time.time(),
+    })
+
+
+@controller_bp.route("/session/download/<path:filename>", methods=["GET"])
+def download_session_file(filename: str):
+    """Download collected data files from the active or latest session."""
+    import os
+    from pathlib import Path
+    from flask import current_app
+
+    sessions_dir = Path(current_app.root_path) / "data" / "sessions"
+    if not sessions_dir.exists():
+        return api_error("No session directory found", 404)
+
+    session_folders = sorted(sessions_dir.glob("session_*"), reverse=True)
+    if not session_folders:
+        return api_error("No sessions found", 404)
+
+    latest_session = session_folders[0]
+    target = (latest_session / filename).resolve()
+    base_dir = latest_session.resolve()
+
+    if not str(target).startswith(str(base_dir)) or not target.is_file():
+        return api_error("File not found or invalid path", 404)
+
+    mimetypes = {
+        ".pcap": "application/vnd.tcpdump.pcap",
+        ".csv": "text/csv",
+        ".json": "application/json",
+        ".jsonl": "application/x-ndjson",
+        ".log": "text/plain",
+        ".gz": "application/gzip",
+    }
+    mimetype = mimetypes.get(target.suffix.lower(), "application/octet-stream")
+    return send_file(target, mimetype=mimetype, as_attachment=True, download_name=target.name)
+
+
+@controller_bp.route("/session/files", methods=["GET"])
+def list_session_files():
+    """List all available session data files with direct download URLs."""
+    import os
+    from pathlib import Path
+    from flask import current_app
+
+    sessions_dir = Path(current_app.root_path) / "data" / "sessions"
+    if not sessions_dir.exists():
+        return api_error("No session directory found", 404)
+
+    session_folders = sorted(sessions_dir.glob("session_*"), reverse=True)
+    if not session_folders:
+        return api_error("No sessions found", 404)
+
+    latest = session_folders[0]
+    files = []
+    for root, _, filenames in os.walk(latest):
+        for fn in sorted(filenames):
+            if fn.startswith("."):
+                continue
+            fp = Path(root) / fn
+            rel = fp.relative_to(latest).as_posix()
+            sz = fp.stat().st_size
+            if sz >= 1024 * 1024 * 1024:
+                human_sz = f"{sz / (1024 * 1024 * 1024):.2f} GB"
+            elif sz >= 1024 * 1024:
+                human_sz = f"{sz / (1024 * 1024):.2f} MB"
+            else:
+                human_sz = f"{sz / 1024:.1f} KB"
+            files.append({
+                "path": rel,
+                "filename": fn,
+                "size_bytes": sz,
+                "size_human": human_sz,
+                "download_url": f"/controller/session/download/{rel}",
+            })
+
+    return jsonify({
+        "status": "success",
+        "session_id": latest.name,
+        "total_files": len(files),
+        "files": files,
     })
 
 
