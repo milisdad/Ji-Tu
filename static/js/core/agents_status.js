@@ -10,7 +10,7 @@
         pager: "Pager", sensor: "433MHz", adsb: "ADS-B", ais: "AIS", acars: "ACARS",
         aprs: "APRS", wifi: "WiFi", bluetooth: "Bluetooth", tscm: "TSCM",
         satellite: "Satelit", dsc: "DSC", rtlamr: "Meters", listening_post: "Listening Post",
-        sweep: "Sweep HackRF"
+        sweep: "Sweep HackRF", drone: "Drone"
     };
     var COLLAPSE_KEY = "jitu-agents-collapsed";
     var panel = null;
@@ -71,54 +71,11 @@
         document.head.appendChild(s);
     }
 
-    function render(agents, sessionData) {
+    function render(agents) {
         if (!panel) return;
-        if (!agents.length && (!sessionData || !sessionData.manifest)) { panel.style.display = "none"; return; }
+        if (!agents.length) { panel.style.display = "none"; return; }
         var online = agents.filter(function (a) { return a.healthy === true; }).length;
-        var html = "";
-
-        if (sessionData && sessionData.manifest && sessionData.manifest.session_id) {
-            var m = sessionData.manifest;
-            var ag1 = sessionData.agents && (sessionData.agents["Ji-Tu-01"] || sessionData.agents["10.141.41.17"]);
-            var ag2 = sessionData.agents && (sessionData.agents["Ji-Tu-02"] || sessionData.agents["10.141.41.18"]);
-
-            var ag1Bytes = 0;
-            if (ag1 && ag1.files) {
-                Object.keys(ag1.files).forEach(function (fn) { ag1Bytes += (ag1.files[fn].size || 0); });
-            }
-            var ag2Bytes = 0;
-            if (ag2 && ag2.files) {
-                Object.keys(ag2.files).forEach(function (fn) { ag2Bytes += (ag2.files[fn].size || 0); });
-            }
-            var ag1Mb = (ag1Bytes / (1024 * 1024)).toFixed(1) + " MB";
-            var ag2Mb = ag2Bytes > 1024 * 1024 * 1024
-                ? (ag2Bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB"
-                : (ag2Bytes / (1024 * 1024)).toFixed(0) + " MB";
-
-            html +=
-                '<div class="wa-session-box" style="margin-bottom:14px;padding:12px 14px;background:rgba(47,174,110,0.08);border:1px solid rgba(47,174,110,0.3);border-radius:8px;">' +
-                    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
-                        '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2fae6e;box-shadow:0 0 8px #2fae6e;"></span>' +
-                        '<strong style="font-size:12px;letter-spacing:1px;color:#2fae6e;text-transform:uppercase;">SESI PEMANTAUAN KONTINU (2 JAM)</strong>' +
-                        '<span style="margin-left:auto;font-size:11px;font-family:monospace;color:var(--text-secondary);">' + esc(m.start_time || "14:40 WIB") + " &rarr; " + esc(m.end_time_target || "16:40 WIB") + "</span>" +
-                    "</div>" +
-                    '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">' +
-                        "<strong>Target Aktif:</strong> Remote Mobil/Keyless 433MHz &bull; Drone RF (915M/2.4G/5.8G) &bull; Drone Wi-Fi Remote ID &bull; Motor Yamaha Y-Connect &bull; Wearables/Ponsel" +
-                    "</div>" +
-                    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;font-size:11px;">' +
-                        '<div style="background:var(--bg-primary);padding:8px 10px;border-radius:6px;border:1px solid var(--border-color);">' +
-                            '<strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Ji-Tu-01 (Sub-GHz & BLE)</strong>' +
-                            '<span style="color:var(--accent-cyan);font-weight:600;">' + ag1Mb + " terdata</span> &bull; 3.230+ Perangkat BLE (Apple, Microsoft, Yamaha CCU, Wearables)" +
-                        "</div>" +
-                        '<div style="background:var(--bg-primary);padding:8px 10px;border-radius:6px;border:1px solid var(--border-color);">' +
-                            '<strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Ji-Tu-02 (Drone Intel & Alfa)</strong>' +
-                            '<span style="color:var(--accent-cyan);font-weight:600;">' + ag2Mb + " terdata</span> &bull; HackRF Drone RF Sweep & WiFi Remote ID" +
-                        "</div>" +
-                    "</div>" +
-                "</div>";
-        }
-
-        html += '<div class="wa-head">Agen Terhubung <span class="wa-count">' +
+        var html = '<div class="wa-head">Agen Terhubung <span class="wa-count">' +
             online + "/" + agents.length + ' menyala</span><button type="button" class="wa-toggle">–</button></div><div class="wa-grid">';
         agents.forEach(function (a) {
             var healthy = a.healthy === true;
@@ -130,6 +87,7 @@
             var links = '<a class="wa-link" href="/controller/manage">Kelola</a>' +
                 ' <a class="wa-link" href="/controller/monitor">Monitor</a>';
             if (caps.sweep === true) links += ' <a class="wa-link" href="/controller/sweep">Spektrum HackRF</a>';
+            if (caps.drone === true) links += ' <a class="wa-link" href="/?mode=drone">Mode Drone</a>';
             html +=
                 '<div class="wa-card">' +
                     '<div class="wa-row"><span class="wa-dot ' + (healthy ? "on" : "off") + '"></span>' +
@@ -149,17 +107,13 @@
     }
 
     function refresh() {
-        Promise.all([
-            fetch("/controller/agents?refresh=true").then(function (r) { return r.ok ? r.json() : null; }),
-            fetch("/controller/session/status").then(function (r) { return r.ok ? r.json() : null; })
-        ])
-        .then(function (results) {
-            var agResult = results[0];
-            var sessResult = results[1];
-            if (!agResult && !sessResult) { if (panel) panel.style.display = "none"; return; }
-            render((agResult && agResult.agents) || [], sessResult || null);
-        })
-        .catch(function () { if (panel) panel.style.display = "none"; });
+        fetch("/controller/agents?refresh=true")
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) {
+                if (!j) { if (panel) panel.style.display = "none"; return; }
+                render(j.agents || []);
+            })
+            .catch(function () { if (panel) panel.style.display = "none"; });
     }
 
     function start() {
