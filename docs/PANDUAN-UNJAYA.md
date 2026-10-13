@@ -31,7 +31,9 @@ Sumber RF -> Sensor (USB) -> Agent (Raspberry Pi) -> ZeroTier -> Controller (lap
 ```
 
 - **Agent**: Raspberry Pi dengan satu atau beberapa perangkat SDR. Bisa
-  terspesialisasi: satu Pi khusus RTL-SDR, satu Pi khusus HackRF, dan seterusnya.
+  terspesialisasi:
+  * **Agen 1 (Ji-Tu-01)**: RTL-SDR (ADS-B Pesawat), Ubertooth One (BLE Motor Yamaha Y-Connect, Wearable, Ponsel), U-Blox GPS.
+  * **Agen 2 (Ji-Tu-02)**: HackRF One (Drone RF 915M/2.4G/5.8G, Sub-GHz Remote Transceiver), WiFi Alfa mode monitor (Drone Wi-Fi Remote ID & WiFi Recon).
   Agent otomatis melaporkan hanya mode yang perangkatnya tersedia.
 - **Controller**: laptop/komputer berisi dashboard yang mengagregasi dan
   mengendalikan agent. Tidak perlu SDR lokal.

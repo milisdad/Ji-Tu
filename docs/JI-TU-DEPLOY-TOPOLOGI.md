@@ -83,5 +83,13 @@ publik, sesuai topologi dokumen penelitian.
   observasi ke controller untuk analisis dan ekspor.
 - E5 (sumber daya): pantau CPU/RAM/suhu Pi lewat mode `system` (Health) pada agent.
 
+## 6. Topologi Operasional Aktual (Implementasi Unjaya)
+
+| Node | Alamat IP / Host | Perangkat Keras Terpasang | Peran Utama Operasi |
+|---|---|---|---|
+| **Controller** | `10.141.41.99:5050` | Server Controller | Pusat kendali, agregasi data, peta real-time, ground-truth pesawat, multilaterasi |
+| **Agen 1 (`Ji-Tu-01`)** | `10.141.41.17:8020` | • RTL-SDR Blog V4<br>• Ubertooth One<br>• U-Blox GPS USB | • Pengawasan ADS-B Pesawat (1090 MHz)<br>• Sniffer BLE: Motor Yamaha (Y-Connect), Wearable Device, Ponsel<br>• Geotagging stempel waktu/posisi |
+| **Agen 2 (`Ji-Tu-02`)** | `10.141.41.18:8020` | • HackRF One (1 MHz - 6 GHz)<br>• WiFi Alfa USB (Atheros AR9271, mode monitor) | • Stasiun Deteksi Drone Terpadu: Drone RF (915M/2.4G/5.8G) + Wi-Fi Remote ID (Open Drone ID)<br>• Transceiver Sub-GHz (Remote Mobil/Motor & Keyless) |
+
 > Catatan: validasi end-to-end (agent -> ZeroTier -> controller) harus diuji di
 > lingkungan nyata; angka throughput/latensi diverifikasi, bukan diasumsikan.

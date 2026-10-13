@@ -16,7 +16,7 @@ import platform
 import re
 import subprocess
 
-from utils.dependencies import check_all_dependencies, check_tool
+from utils.dependencies import check_all_dependencies, check_tool, get_tool_path
 from utils.logging import get_logger
 
 logger = get_logger("intercept.capabilities")
@@ -152,8 +152,10 @@ def detect_interfaces() -> dict[str, list]:
         except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.SubprocessError):
             pass
     else:  # Linux
+        iw_bin = get_tool_path("iw") or "iw"
+        iwconfig_bin = get_tool_path("iwconfig") or "iwconfig"
         try:
-            result = subprocess.run(["iw", "dev"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run([iw_bin, "dev"], capture_output=True, text=True, timeout=5)
             current_iface = None
             for line in result.stdout.split("\n"):
                 line = line.strip()
@@ -173,7 +175,7 @@ def detect_interfaces() -> dict[str, list]:
         except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.SubprocessError):
             # Fall back to iwconfig
             try:
-                result = subprocess.run(["iwconfig"], capture_output=True, text=True, timeout=5)
+                result = subprocess.run([iwconfig_bin], capture_output=True, text=True, timeout=5)
                 for line in result.stdout.split("\n"):
                     if "IEEE 802.11" in line:
                         iface = line.split()[0]
@@ -190,8 +192,9 @@ def detect_interfaces() -> dict[str, list]:
 
     # Detect Bluetooth adapters
     if platform.system() == "Linux":
+        hciconfig_bin = get_tool_path("hciconfig") or "hciconfig"
         try:
-            result = subprocess.run(["hciconfig"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run([hciconfig_bin], capture_output=True, text=True, timeout=5)
             blocks = re.split(r"(?=^hci\d+:)", result.stdout, flags=re.MULTILINE)
             for block in blocks:
                 if block.strip():
