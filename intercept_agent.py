@@ -4087,10 +4087,81 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
         self.end_headers()
 
+# SubGHz SSE event stream subscribers
+_subghz_stream_subscribers: set[queue.Queue] = set()
+_subghz_stream_lock = threading.Lock()
+_agent_shutdown_requested = threading.Event()
+
+
+def _subghz_event_callback(event: dict) -> None:
+    """Callback invoked by SubGhzManager to forward events to SSE subscribers."""
+    with _subghz_stream_lock:
+        if not _subghz_stream_subscribers:
+            return
+        dead = []
+        for q in _subghz_stream_subscribers:
+            try:
+                q.put_nowait(event)
+            except queue.Full:
+                try:
+                    q.get_nowait()
+                    q.put_nowait(event)
+                except queue.Empty:
+                    pass
+            except Exception:
+                dead.append(q)
+        for q in dead:
+            _subghz_stream_subscribers.discard(q)
+
+
     # --- Ji-Tu: SubGHz transceiver di agent (pakai ulang utils.subghz.SubGhzManager) ---
     def _subghz_mgr(self):
         from utils.subghz import get_subghz_manager
         return get_subghz_manager()
+
+    def _ensure_subghz_callback(self):
+        try:
+            mgr = self._subghz_mgr()
+            if mgr:
+                mgr.set_callback(_subghz_event_callback)
+        except Exception as exc:
+            logger.warning(f"Failed to wire SubGHz callback: {exc}")
+
+    def _handle_subghz_stream(self):
+        """Serve live SubGHz events over SSE (text/event-stream)."""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "keep-alive")
+        self.send_header("X-Accel-Buffering", "no")
+        if config.allow_cors:
+            self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+
+        self._ensure_subghz_callback()
+
+        client_q = queue.Queue(maxsize=150)
+        with _subghz_stream_lock:
+            _subghz_stream_subscribers.add(client_q)
+
+        try:
+            self.wfile.write(b": connected\n\n")
+            self.wfile.flush()
+
+            while not _agent_shutdown_requested.is_set():
+                try:
+                    event = client_q.get(timeout=1.0)
+                    msg = f"data: {json.dumps(event)}\n\n".encode("utf-8")
+                    self.wfile.write(msg)
+                    self.wfile.flush()
+                except queue.Empty:
+                    self.wfile.write(b": keepalive\n\n")
+                    self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass
+        finally:
+            with _subghz_stream_lock:
+                _subghz_stream_subscribers.discard(client_q)
 
     def _subghz_status(self) -> dict:
         try:
@@ -4123,6 +4194,7 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
                 kwargs["trigger_enabled"] = bool(body["trigger_enabled"])
             if body.get("device_serial"):
                 kwargs["device_serial"] = str(body["device_serial"])
+            self._ensure_subghz_callback()
             return self._subghz_mgr().start_receive(**kwargs)
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -4280,6 +4352,9 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
 
         elif path == "/subghz/status":
             self._send_json(self._subghz_status())
+
+        elif path == "/subghz/stream":
+            self._handle_subghz_stream()
 
         elif path == "/subghz/captures":
             self._send_json({"status": "success", "captures": self._subghz_captures()})
@@ -4500,7 +4575,7 @@ def main():
     print()
 
     # Shutdown flag
-    shutdown_requested = threading.Event()
+    shutdown_requested = _agent_shutdown_requested
 
     # Handle shutdown - run cleanup in separate thread to avoid blocking
     def signal_handler(sig, frame):

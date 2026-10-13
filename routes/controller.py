@@ -20,7 +20,7 @@ from collections.abc import Generator
 from datetime import datetime, timezone
 
 import requests
-from flask import Blueprint, Response, jsonify, redirect, request, session, url_for
+from flask import Blueprint, Response, jsonify, redirect, request, session, url_for, stream_with_context
 
 from utils.agent_client import AgentClient, AgentConnectionError, AgentHTTPError, create_client_from_agent
 from utils.database import (
@@ -622,10 +622,10 @@ def proxy_wifi_monitor(agent_id: int):
 
 @controller_bp.route("/agents/<int:agent_id>/subghz/<path:subpath>", methods=["GET", "POST", "DELETE", "PATCH"])
 def proxy_subghz(agent_id: int, subpath: str):
-    """Proxy SubGHz transceiver calls (RX/captures/TX) to a remote agent.
+    """Proxy SubGHz transceiver calls (RX/captures/TX/stream) to a remote agent.
 
     Meneruskan status + body apa adanya agar UI menerima respons asli agent
-    (termasuk pesan error 400 dan unduhan biner capture).
+    (termasuk pesan error 400, unduhan biner capture, dan stream SSE chunked).
     """
     agent = get_agent(agent_id)
     if not agent:
@@ -636,6 +636,35 @@ def proxy_subghz(agent_id: int, subpath: str):
     if key:
         headers["X-API-Key"] = key
     method = request.method
+
+    if subpath == "stream":
+        try:
+            req = requests.get(url, headers=headers, stream=True, timeout=(5, None))
+            if req.status_code != 200:
+                return Response(
+                    req.content,
+                    status=req.status_code,
+                    content_type=req.headers.get("Content-Type", "text/plain"),
+                )
+
+            def generate() -> Generator[bytes, None, None]:
+                try:
+                    for chunk in req.iter_content(chunk_size=None):
+                        if chunk:
+                            yield chunk
+                except Exception:
+                    pass
+                finally:
+                    req.close()
+
+            response = Response(stream_with_context(generate()), mimetype="text/event-stream")
+            response.headers["Cache-Control"] = "no-cache"
+            response.headers["X-Accel-Buffering"] = "no"
+            response.headers["Connection"] = "keep-alive"
+            return response
+        except requests.RequestException as e:
+            return api_error(f"Cannot reach agent stream: {e}", 503)
+
     try:
         if method == "POST":
             resp = requests.post(url, json=(request.get_json(silent=True) or {}), headers=headers, timeout=60)

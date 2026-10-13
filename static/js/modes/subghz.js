@@ -93,7 +93,6 @@ const SubGhz = (function() {
      */
     function init() {
         loadCaptures();
-        startStream();
         startStatusPolling();
         syncTriggerControls();
 
@@ -120,6 +119,7 @@ const SubGhz = (function() {
                     syncWaterfallControls();
                     showConsole();
                     startStatusTimer();
+                    startStream();
                 } else if (mode === 'sweep') {
                     showPanel('sweep');
                     initSweepCanvas();
@@ -792,7 +792,7 @@ const SubGhz = (function() {
         .then(r => r.json())
         .then(data => {
             if (data.status === 'started') {
-                if (base) addConsoleEntry('Capture berjalan di agent remote; hasil tersimpan di agent (burst langsung belum tersedia untuk remote).', 'info');
+                if (base) addConsoleEntry('Capture live stream aktif dari agent remote.', 'info');
                 updateStatusUI({ mode: 'rx' });
                 startStatusTimer();
                 showPanel('rx');
@@ -803,6 +803,8 @@ const SubGhz = (function() {
                 resetRxVisuals();
                 showConsole();
                 addConsoleEntry('RX capture started at ' + (params.frequency_hz / 1e6).toFixed(3) + ' MHz', 'info');
+                // Buka live stream SSE dari agent remote atau lokal
+                startStream(base ? base + '/subghz/stream' : '/subghz/stream');
                 if (params.trigger_enabled) {
                     const pre = Number(params.trigger_pre_ms || 0);
                     const post = Number(params.trigger_post_ms || 0);
@@ -827,6 +829,7 @@ const SubGhz = (function() {
         fetch(base + '/subghz/receive/stop', { method: 'POST' })
             .then(r => r.json())
             .then(data => {
+                stopStream();
                 updateStatusUI({ mode: 'idle' });
                 stopStatusTimer();
                 resetRxVisuals();
@@ -2755,12 +2758,14 @@ const SubGhz = (function() {
 
     // ------ SSE STREAM ------
 
-    function startStream() {
+    function startStream(streamUrl) {
         if (eventSource) {
             eventSource.close();
+            eventSource = null;
         }
 
-        eventSource = new EventSource('/subghz/stream');
+        const targetUrl = streamUrl || (subghzRemoteAgentId && !hackrfDetected ? '/controller/agents/' + subghzRemoteAgentId + '/subghz/stream' : '/subghz/stream');
+        eventSource = new EventSource(targetUrl);
 
         eventSource.onmessage = function(e) {
             try {
@@ -2772,12 +2777,21 @@ const SubGhz = (function() {
         };
 
         eventSource.onerror = function() {
-            setTimeout(() => {
-                if (document.getElementById('subghzMode')?.classList.contains('active')) {
-                    startStream();
-                }
-            }, 3000);
+            if (currentMode !== 'idle') {
+                setTimeout(() => {
+                    if (currentMode !== 'idle' && !eventSource && document.getElementById('subghzMode')?.classList.contains('active')) {
+                        startStream(targetUrl);
+                    }
+                }, 3000);
+            }
         };
+    }
+
+    function stopStream() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
     }
 
     function handleEvent(data) {
