@@ -156,6 +156,25 @@ def detect_interfaces() -> dict[str, list]:
         iwconfig_bin = get_tool_path("iwconfig") or "iwconfig"
         try:
             result = subprocess.run([iw_bin, "dev"], capture_output=True, text=True, timeout=5)
+            # Map interface to its phy
+            phy_map: dict[str, str] = {}
+            current_phy = None
+            for line in result.stdout.splitlines():
+                line = line.strip()
+                if line.startswith("phy#"):
+                    current_phy = "phy" + line.split("#")[1]
+                elif line.startswith("Interface"):
+                    iface = line.split()[1]
+                    if current_phy and iface:
+                        phy_map[iface] = current_phy
+
+            # Query monitor capability for each phy
+            monitor_supported_phys: set[str] = set()
+            for phy in set(phy_map.values()):
+                p_res = subprocess.run([iw_bin, "phy", phy, "info"], capture_output=True, text=True, timeout=5)
+                if "* monitor" in p_res.stdout:
+                    monitor_supported_phys.add(phy)
+
             current_iface = None
             for line in result.stdout.split("\n"):
                 line = line.strip()
@@ -163,12 +182,14 @@ def detect_interfaces() -> dict[str, list]:
                     current_iface = line.split()[1]
                 elif current_iface and "type" in line:
                     iface_type = line.split()[-1]
+                    phy = phy_map.get(current_iface)
+                    can_monitor = phy in monitor_supported_phys if phy else False
                     interfaces["wifi_interfaces"].append(
                         {
                             "name": current_iface,
                             "display_name": f"Wireless ({current_iface}) - {iface_type}",
                             "type": iface_type,
-                            "monitor_capable": True,
+                            "monitor_capable": can_monitor,
                         }
                     )
                     current_iface = None

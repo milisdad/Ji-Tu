@@ -1,6 +1,6 @@
 [project]
 name = "ji-tu"
-version = "2.34.3"
+version = "2.34.4"
 description = "Signal Intelligence Platform - Pager/433MHz/ADS-B/Satellite/WiFi/Bluetooth"
 readme = "README.md"
 requires-python = ">=3.9"
