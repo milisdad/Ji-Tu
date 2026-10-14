@@ -28,8 +28,10 @@ function initSensorScope() {
 }
 
 function addSensorBurst(msg) {
-    if (!sensorBurstPlot || !msg || msg.rssi === undefined || msg.rssi === null) return;
-    sensorBurstPlot.add({ level: msg.rssi, snr: msg.snr, noise: msg.noise, label: msg.model });
+    if (!sensorBurstPlot || !msg) return;
+    const rssi = (msg.rssi !== undefined && msg.rssi !== null) ? Number(msg.rssi) : -18;
+    const snr = (msg.snr !== undefined && msg.snr !== null) ? Number(msg.snr) : 15;
+    sensorBurstPlot.add({ level: rssi, snr: snr, noise: msg.noise, label: msg.model || "Remote" });
 }
 
 function stopSensorScope() {
@@ -177,6 +179,7 @@ function stopSensorDecoding() {
 
 // Polling interval for agent data
 let agentPollInterval = null;
+const seenAgentSensorSigs = new Set();
 
 // Start polling agent for sensor data
 function startAgentSensorStream() {
@@ -185,54 +188,67 @@ function startAgentSensorStream() {
     }
 
     // Poll every 2 seconds for new data
-    agentPollInterval = setInterval(() => {
-        if (!isSensorRunning || currentAgent === 'local') {
+    agentPollInterval = setInterval(async () => {
+        if (!isSensorRunning || typeof currentAgent === 'undefined' || currentAgent === 'local') {
             clearInterval(agentPollInterval);
             agentPollInterval = null;
             return;
         }
 
-        fetch(`/controller/agents/${currentAgent}/sensor/data`)
-            .then(r => r.json())
-            .then(data => {
-                if (data.sensors) {
-                    data.sensors.forEach(sensor => {
-                        displaySensorMessage(sensor);
-                    });
-                }
-            })
-            .catch(err => console.error('Agent poll error:', err));
+        try {
+            const r = await fetch(`/controller/agents/${currentAgent}/sensor/data`);
+            if (!r.ok) return;
+            const res = await r.json();
+            if (res.status !== 'success' || !res.data) return;
+
+            // Extract sensor readings: controller wraps agent response in res.data
+            // Agent returns {"mode": "sensor", "data": [...]}
+            const payload = res.data;
+            const list = payload.data || payload.sensors || (Array.isArray(payload) ? payload : []);
+            if (!Array.isArray(list)) return;
+
+            list.forEach(sensor => {
+                const code = (sensor.codes && sensor.codes[0]) || (sensor.rows && sensor.rows[0]?.data) || '';
+                const sig = (sensor.time || sensor.received_at || '') + '_' + 
+                            (sensor.model || '') + '_' + 
+                            (sensor.id !== undefined ? sensor.id : code);
+                if (seenAgentSensorSigs.has(sig)) return;
+                seenAgentSensorSigs.add(sig);
+
+                addSensorReading(sensor);
+            });
+        } catch (err) {
+            console.error('Agent poll error:', err);
+        }
     }, 2000);
 }
 
 // Display a sensor message (works for both local and remote)
 function displaySensorMessage(msg) {
-    const output = document.getElementById('output');
-    if (!output) return;
-
-    // Remove placeholder
-    const placeholder = output.querySelector('.placeholder');
-    if (placeholder) placeholder.style.display = 'none';
-
-    addSensorBurst(msg);
-
-    // Create signal card if SignalCards is available
-    if (typeof SignalCards !== 'undefined' && SignalCards.createFromSensor) {
-        const card = SignalCards.createFromSensor(msg);
-        if (card) {
-            output.insertBefore(card, output.firstChild);
-            sensorCount++;
-            updateStats();
-        }
-    }
+    addSensorReading(msg);
 }
 
 function setSensorRunning(running) {
     isSensorRunning = running;
-    document.getElementById('statusDot').classList.toggle('running', running);
-    document.getElementById('statusText').textContent = running ? 'Listening...' : 'Idle';
-    document.getElementById('startSensorBtn').style.display = running ? 'none' : 'block';
-    document.getElementById('stopSensorBtn').style.display = running ? 'block' : 'none';
+    const dot = document.getElementById('statusDot');
+    if (dot) dot.classList.toggle('running', running);
+    const text = document.getElementById('statusText');
+    if (text) text.textContent = running ? 'Listening...' : 'Idle';
+    const startBtn = document.getElementById('startSensorBtn');
+    if (startBtn) startBtn.style.display = running ? 'none' : 'block';
+    const stopBtn = document.getElementById('stopSensorBtn');
+    if (stopBtn) stopBtn.style.display = running ? 'block' : 'none';
+
+    if (running) {
+        if (typeof currentAgent !== 'undefined' && currentAgent !== 'local') {
+            startAgentSensorStream();
+        }
+    } else {
+        if (agentPollInterval) {
+            clearInterval(agentPollInterval);
+            agentPollInterval = null;
+        }
+    }
 
     // Signal scope
     const scopePanel = document.getElementById('sensorScopePanel');
@@ -292,20 +308,33 @@ function addSensorReading(data) {
     document.getElementById('sensorCount').textContent = sensorCount;
 
     // Track unique devices by model + id
-    const deviceKey = (data.model || 'Unknown') + '_' + (data.id || data.channel || '0');
+    const codeStr = (data.codes && data.codes[0]) ? data.codes[0] : (data.rows && data.rows[0] ? data.rows[0].data : null);
+    let modelName = data.model || 'Unknown';
+    let sensorId = data.id !== undefined ? String(data.id) : (data.channel !== undefined ? String(data.channel) : (codeStr ? (codeStr.length > 20 ? codeStr.substring(0, 20) + '...' : codeStr) : 'Remote'));
+
+    // Specifically identify Honda Smart Key (K1Z-A010-0000)
+    if (modelName === 'Remote_FSK' || modelName === 'Honda_K1Z' || modelName.includes('K1Z')) {
+        modelName = 'Honda Smart Key (K1Z-A010-0000)';
+        sensorId = 'K1Z-A010-0000';
+    }
+
+    const deviceKey = modelName + '_' + sensorId;
     if (!uniqueDevices.has(deviceKey)) {
         uniqueDevices.add(deviceKey);
-        document.getElementById('deviceCount').textContent = uniqueDevices.size;
+        const devCountEl = document.getElementById('deviceCount');
+        if (devCountEl) devCountEl.textContent = uniqueDevices.size;
     }
 
     // Convert rtl_433 data format to our card format
     const msg = {
-        model: data.model || 'Unknown',
-        id: data.id || data.channel || 'N/A',
+        model: modelName,
+        id: sensorId,
+        sensor_id: sensorId,
         channel: data.channel,
-        timestamp: data.time || new Date().toISOString(),
-        raw: data.raw,
-        frequency: data.freq
+        timestamp: data.time || data.received_at || new Date().toISOString(),
+        raw: data.raw || (codeStr ? JSON.stringify(data) : undefined),
+        frequency: data.freq || (document.getElementById('sensorFrequency') ? document.getElementById('sensorFrequency').value : '433.92'),
+        code: codeStr
     };
 
     // Map common sensor fields

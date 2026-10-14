@@ -429,6 +429,9 @@ def proxy_start_mode(agent_id: int, mode: str):
     except AgentConnectionError as e:
         return api_error(f"Cannot connect to agent: {e}", 503)
     except AgentHTTPError as e:
+        if "already running" in str(e).lower():
+            update_agent(agent_id, update_last_seen=True)
+            return jsonify({"status": "success", "agent_id": agent_id, "mode": mode, "result": {"status": "already_scanning", "running": True}})
         return api_error(f"Agent error: {e}", 502)
 
 

@@ -303,7 +303,8 @@
         body.className = 'sb-status-rows';
         body.append(...rows);
         // A tool the mode cannot run without, and how to install it (ToolReadiness)
-        const needs = window.ToolReadiness ? ToolReadiness.forMode(mode) : null;
+        const isAgent = typeof currentAgent !== "undefined" && currentAgent !== "local";
+        const needs = (!isAgent && window.ToolReadiness) ? ToolReadiness.forMode(mode) : null;
         let missing = null;
         if (needs) {
             missing = document.createElement('div');

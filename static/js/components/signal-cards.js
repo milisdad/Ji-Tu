@@ -829,6 +829,12 @@ const SignalCards = (function() {
                         <span class="sensor-value">${escapeHtml(msg.state)}</span>
                     </div>
                     ` : ''}
+                    ${msg.code !== undefined && msg.code !== null ? `
+                    <div class="signal-sensor-reading" style="grid-column: 1 / -1;">
+                        <span class="sensor-label">Code / RF Data</span>
+                        <span class="sensor-value" style="font-family: monospace; font-size: 0.85em; word-break: break-all;" title="${escapeHtml(String(msg.code))}">${escapeHtml(String(msg.code).length > 36 ? String(msg.code).substring(0, 36) + '...' : String(msg.code))}</span>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
             <div class="signal-card-actions-float">

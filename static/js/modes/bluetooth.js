@@ -1182,19 +1182,19 @@ const BluetoothMode = (function() {
                 const data = result.data || result;
 
                 // Process devices from polling response
+                let rawList = [];
                 if (data && data.devices) {
-                    const agentName = getCurrentAgentName();
-                    Object.values(data.devices).forEach(device => {
-                        device._agent = agentName;
-                        handleDeviceUpdate(device);
-                    });
+                    rawList = Object.values(data.devices);
+                } else if (data && Array.isArray(data.data)) {
+                    rawList = data.data;
                 } else if (data && Array.isArray(data)) {
-                    const agentName = getCurrentAgentName();
-                    data.forEach(device => {
-                        device._agent = agentName;
-                        handleDeviceUpdate(device);
-                    });
+                    rawList = data;
                 }
+                const agentName = getCurrentAgentName();
+                rawList.forEach(device => {
+                    device._agent = agentName;
+                    handleDeviceUpdate(device);
+                });
             } catch (err) {
                 console.debug('[BT] Agent poll error:', err);
             }
@@ -1202,6 +1202,12 @@ const BluetoothMode = (function() {
     }
 
     function handleDeviceUpdate(device) {
+        if (!device) return;
+        if (!device.device_id) device.device_id = device.mac || device.address;
+        if (!device.address) device.address = device.mac || device.device_id;
+        if (device.rssi_current === undefined && device.rssi !== undefined) device.rssi_current = device.rssi;
+        if (!device.device_id) return;
+
         devices.set(device.device_id, device);
         pendingDeviceIds.add(device.device_id);
         if (selectedDeviceId === device.device_id) {
@@ -1683,6 +1689,7 @@ const BluetoothMode = (function() {
 
         // Refresh capabilities for new agent
         checkCapabilities();
+        checkScanStatus();
 
         lastAgentId = currentAgentId;
     }

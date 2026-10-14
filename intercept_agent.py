@@ -1134,6 +1134,8 @@ class ModeManager:
 
     def _start_sensor(self, params: dict) -> dict:
         """Start rtl_433 sensor mode using Intercept's SDR utilities."""
+        if "sensor" in self.processes and self.processes["sensor"].poll() is None:
+            return {"status": "started", "mode": "sensor", "already_running": True}
         freq = params.get("frequency", "433.92")
         gain = params.get("gain")
         device = params.get("device", "0")
@@ -1173,6 +1175,17 @@ class ModeManager:
 
         # Unit conversion, matching the controller's /start_sensor handling
         cmd.extend(["-C", units])
+
+        # Enable car key remote decoders & flex decoders for rolling code / PWM / PPM / FSK + level metadata
+        cmd.extend([
+            "-s", "1024k",
+            "-M", "level",
+            "-R", "48", "-R", "64", "-R", "131", "-R", "218",
+            "-X", "n=Remote_PWM,m=OOK_PWM,s=350,l=800,r=8000,bits>=32",
+            "-X", "n=Remote_PPM,m=OOK_PPM,s=350,l=800,r=8000,bits>=32",
+            "-X", "n=Honda_K1Z,m=FSK_PCM,s=100,l=100,r=2000,bits>=32",
+            "-X", "n=Remote_FSK,m=FSK_PCM,s=100,l=100,r=2000,bits>=32",
+        ])
 
         try:
             proc = subprocess.Popen(
