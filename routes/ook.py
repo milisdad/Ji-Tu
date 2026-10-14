@@ -237,7 +237,12 @@ def start_ook() -> Response:
                 app_module.release_sdr_device(ook_active_device, ook_active_sdr_type or "rtlsdr")
                 ook_active_device = None
                 ook_active_sdr_type = None
-            return api_error(f"Tool not found: {e.filename}", 400)
+            return api_error(
+                f"Tool not found: {e.filename}. "
+                "If your SDR device is attached to a remote agent (e.g. Agen 1), "
+                "please select that agent in the Signal Source selector in the sidebar.",
+                400,
+            )
 
         except Exception as e:
             try:

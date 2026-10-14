@@ -113,7 +113,7 @@ def _error_result(error: Exception) -> dict:
 
 
 # Modes that tune an SDR and so take its PPM, gain and bias-T defaults
-SDR_MODES = {"sensor", "adsb", "pager", "ais", "acars", "aprs", "rtlamr", "dsc", "listening_post"}
+SDR_MODES = {"sensor", "adsb", "pager", "ais", "acars", "aprs", "rtlamr", "dsc", "listening_post", "ook"}
 
 # Import database functions for baseline support (same as local mode)
 try:
@@ -171,6 +171,7 @@ class AgentConfig:
             "satellite": True,
             "listening_post": True,
             "sweep": True,
+            "ook": True,
         }
 
     def load_from_file(self, filepath: str) -> bool:
@@ -600,7 +601,7 @@ class ModeManager:
         return status
 
     # Modes that use RTL-SDR devices
-    SDR_MODES = {"adsb", "sensor", "pager", "ais", "acars", "dsc", "rtlamr", "listening_post"}
+    SDR_MODES = {"adsb", "sensor", "pager", "ais", "acars", "dsc", "rtlamr", "listening_post", "ook"}
 
     def get_sdr_in_use(self, device: int = 0) -> str | None:
         """Check if an SDR device is in use by another mode.
@@ -811,6 +812,12 @@ class ModeManager:
                 "messages": messages[-50:] if len(messages) > 50 else messages,
                 "total_count": len(messages),
             }
+        elif mode == "ook":
+            frames = self.data_snapshots.get(mode, [])
+            data["data"] = {
+                "frames": frames[-50:] if len(frames) > 50 else frames,
+                "total_count": len(frames),
+            }
         else:
             data["data"] = self.data_snapshots.get(mode, [])
 
@@ -998,6 +1005,7 @@ class ModeManager:
             "listening_post": self._start_listening_post,
             "sweep": self._start_sweep,
             "drone": self._start_drone,
+            "ook": self._start_ook,
         }
 
         handler = handlers.get(mode)
@@ -1277,6 +1285,187 @@ class ModeManager:
             with contextlib.suppress(Exception):
                 proc.wait(timeout=1)
             logger.info("Sensor output reader stopped")
+
+    # -------------------------------------------------------------------------
+    # OOK SIGNAL DECODER MODE (rtl_433 flex decoder)
+    # -------------------------------------------------------------------------
+
+    def _start_ook(self, params: dict) -> dict:
+        """Start rtl_433 OOK flex decoder mode."""
+        if "ook" in self.processes and self.processes["ook"].poll() is None:
+            return {"status": "started", "mode": "ook", "already_running": True}
+
+        freq = params.get("frequency", "433.920")
+        gain = params.get("gain", "0")
+        ppm = params.get("ppm", "0")
+        device = params.get("device", "0")
+        bias_t = params.get("bias_t", False)
+        sdr_type_str = params.get("sdr_type", "rtlsdr")
+        encoding = str(params.get("encoding", "pwm")).lower().strip()
+        try:
+            short_pulse = int(params.get("short_pulse", 300))
+            long_pulse = int(params.get("long_pulse", 600))
+            reset_limit = int(params.get("reset_limit", 8000))
+            gap_limit = int(params.get("gap_limit", 5000))
+            tolerance = int(params.get("tolerance", 150))
+            min_bits = int(params.get("min_bits", 8))
+        except (ValueError, TypeError):
+            short_pulse, long_pulse, reset_limit, gap_limit, tolerance, min_bits = 300, 600, 8000, 5000, 150, 8
+        deduplicate = bool(params.get("deduplicate", False))
+
+        modulation_map = {
+            "pwm": "OOK_PWM",
+            "ppm": "OOK_PPM",
+            "manchester": "OOK_MC_ZEROBIT",
+        }
+        modulation = modulation_map.get(encoding, "OOK_PWM")
+        flex_spec = (
+            f"n=ook,m={modulation},"
+            f"s={short_pulse},l={long_pulse},"
+            f"r={reset_limit},g={gap_limit},"
+            f"t={tolerance},bits>={min_bits}"
+        )
+
+        sdr_factory = self._get_sdr_factory()
+        if sdr_factory:
+            try:
+                from utils.sdr import SDRType
+
+                sdr_type = SDRType(sdr_type_str)
+                sdr_device = sdr_factory.create_default_device(sdr_type, index=int(device))
+                builder = sdr_factory.get_builder(sdr_type)
+                cmd = builder.build_ism_command(
+                    device=sdr_device,
+                    frequency_mhz=float(freq),
+                    gain=float(gain) if gain and str(gain) != "0" else None,
+                    ppm=int(ppm) if ppm and str(ppm) != "0" else None,
+                    bias_t=bias_t,
+                )
+            except Exception as e:
+                logger.warning(f"SDR abstraction failed for OOK, falling back: {e}")
+                cmd = ["rtl_433", "-f", f"{float(freq):.3f}M", "-F", "json"]
+                if gain and str(gain) != "0":
+                    cmd.extend(["-g", str(gain)])
+                if ppm and str(ppm) != "0":
+                    cmd.extend(["-p", str(ppm)])
+                if device and str(device) != "0":
+                    cmd.extend(["-d", str(device)])
+        else:
+            cmd = ["rtl_433", "-f", f"{float(freq):.3f}M", "-F", "json"]
+            if gain and str(gain) != "0":
+                cmd.extend(["-g", str(gain)])
+            if ppm and str(ppm) != "0":
+                cmd.extend(["-p", str(ppm)])
+            if device and str(device) != "0":
+                cmd.extend(["-d", str(device)])
+
+        filtered_cmd: list[str] = []
+        skip_next = False
+        for arg in cmd:
+            if skip_next:
+                skip_next = False
+                continue
+            if arg == "-R":
+                skip_next = True
+                continue
+            filtered_cmd.append(arg)
+
+        filtered_cmd.extend(["-M", "level", "-R", "0", "-X", flex_spec])
+        logger.info(f"Starting OOK decoder: {' '.join(filtered_cmd)}")
+
+        try:
+            proc = subprocess.Popen(
+                filtered_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,
+            )
+            self.processes["ook"] = proc
+
+            time.sleep(0.5)
+            if proc.poll() is not None:
+                stderr_output = proc.stderr.read().decode("utf-8", errors="replace")
+                del self.processes["ook"]
+                return {"status": "error", "message": f"rtl_433 failed to start: {stderr_output[:200]}"}
+
+            self.data_snapshots["ook"] = []
+            ook_q = queue.Queue(maxsize=1000)
+            self.data_queues["ook"] = ook_q
+
+            thread = threading.Thread(
+                target=self._ook_output_reader,
+                args=(proc, params),
+                daemon=True,
+            )
+            thread.start()
+            self.output_threads["ook"] = thread
+
+            return {
+                "status": "started",
+                "mode": "ook",
+                "command": " ".join(filtered_cmd),
+                "encoding": encoding,
+                "modulation": modulation,
+                "flex_spec": flex_spec,
+                "deduplicate": deduplicate,
+            }
+        except FileNotFoundError:
+            return _tool_missing("rtl_433")
+        except Exception as e:
+            return _error_result(e)
+
+    def _ook_output_reader(self, proc: subprocess.Popen, params: dict):
+        """Read and parse rtl_433 JSON output for OOK mode."""
+        mode = "ook"
+        encoding = str(params.get("encoding", "pwm")).lower().strip()
+        deduplicate = bool(params.get("deduplicate", False))
+        stop_event = self.stop_events.get(mode)
+        if not stop_event:
+            stop_event = threading.Event()
+            self.stop_events[mode] = stop_event
+
+        _ook_event_callback({"type": "status", "text": "started"})
+
+        try:
+            from utils.ook import ook_parser_thread
+
+            local_q = queue.Queue(maxsize=500)
+            parser_t = threading.Thread(
+                target=ook_parser_thread,
+                args=(proc.stdout, local_q, stop_event, encoding, deduplicate),
+                daemon=True,
+            )
+            parser_t.start()
+
+            while not stop_event.is_set():
+                try:
+                    event = local_q.get(timeout=0.5)
+                except queue.Empty:
+                    if proc.poll() is not None and local_q.empty():
+                        break
+                    continue
+
+                _ook_event_callback(event)
+
+                if event.get("type") == "ook_frame":
+                    snapshots = self.data_snapshots.get(mode, [])
+                    snapshots.append(event)
+                    if len(snapshots) > 200:
+                        snapshots = snapshots[-200:]
+                    self.data_snapshots[mode] = snapshots
+
+                if mode in self.data_queues:
+                    with contextlib.suppress(queue.Full):
+                        self.data_queues[mode].put_nowait(event)
+
+        except Exception as e:
+            logger.error(f"OOK output reader error: {e}")
+        finally:
+            stop_event.set()
+            _ook_event_callback({"type": "status", "text": "stopped"})
+            with contextlib.suppress(Exception):
+                proc.wait(timeout=1)
+            logger.info("OOK output reader stopped")
 
     # -------------------------------------------------------------------------
     # ADS-B MODE (dump1090) - Uses Intercept's SDR abstraction
@@ -4045,6 +4234,31 @@ _subghz_stream_subscribers: set[queue.Queue] = set()
 _subghz_stream_lock = threading.Lock()
 _agent_shutdown_requested = threading.Event()
 
+# OOK SSE event stream subscribers
+_ook_stream_subscribers: set[queue.Queue] = set()
+_ook_stream_lock = threading.Lock()
+
+
+def _ook_event_callback(event: dict) -> None:
+    """Callback to forward OOK events to SSE subscribers."""
+    with _ook_stream_lock:
+        if not _ook_stream_subscribers:
+            return
+        dead = []
+        for q in _ook_stream_subscribers:
+            try:
+                q.put_nowait(event)
+            except queue.Full:
+                try:
+                    q.get_nowait()
+                    q.put_nowait(event)
+                except queue.Empty:
+                    pass
+            except Exception:
+                dead.append(q)
+        for q in dead:
+            _ook_stream_subscribers.discard(q)
+
 
 def _subghz_event_callback(event: dict) -> None:
     """Callback invoked by SubGhzManager to forward events to SSE subscribers."""
@@ -4176,6 +4390,40 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
         finally:
             with _subghz_stream_lock:
                 _subghz_stream_subscribers.discard(client_q)
+
+    def _handle_ook_stream(self):
+        """Serve live OOK events over SSE (text/event-stream)."""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "keep-alive")
+        self.send_header("X-Accel-Buffering", "no")
+        if config.allow_cors:
+            self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+
+        client_q = queue.Queue(maxsize=200)
+        with _ook_stream_lock:
+            _ook_stream_subscribers.add(client_q)
+
+        try:
+            self.wfile.write(b": connected\n\n")
+            self.wfile.flush()
+
+            while not _agent_shutdown_requested.is_set():
+                try:
+                    event = client_q.get(timeout=1.0)
+                    msg = f"data: {json.dumps(event)}\n\n".encode("utf-8")
+                    self.wfile.write(msg)
+                    self.wfile.flush()
+                except queue.Empty:
+                    self.wfile.write(b": keepalive\n\n")
+                    self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass
+        finally:
+            with _ook_stream_lock:
+                _ook_stream_subscribers.discard(client_q)
 
     def _subghz_status(self) -> dict:
         try:
@@ -4403,6 +4651,9 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
         elif path == "/subghz/stream":
             self._handle_subghz_stream()
 
+        elif path == "/ook/stream":
+            self._handle_ook_stream()
+
         elif path == "/subghz/captures":
             self._send_json({"status": "success", "captures": self._subghz_captures()})
 
@@ -4421,7 +4672,7 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
                 self._send_error("Not found", 404)
 
         elif path.startswith("/") and path.count("/") == 2:
-            # /{mode}/status or /{mode}/data
+            # /{mode}/status, /{mode}/data, or /{mode}/stream
             parts = path.split("/")
             mode = parts[1]
             action = parts[2]
@@ -4430,6 +4681,8 @@ class InterceptAgentHandler(BaseHTTPRequestHandler):
                 self._send_json(mode_manager.get_mode_status(mode))
             elif action == "data":
                 self._send_json(mode_manager.get_mode_data(mode))
+            elif action == "stream" and mode == "ook":
+                self._handle_ook_stream()
             else:
                 self._send_error("Not found", 404)
 

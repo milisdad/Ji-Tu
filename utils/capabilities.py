@@ -41,6 +41,7 @@ EXTRA_MODE_TOOLS = {
     "rtlamr": ["rtlamr"],
     "listening_post": ["rtl_fm"],
     "sweep": ["hackrf_sweep"],
+    "ook": ["rtl_433"],
 }
 
 # Fallback tool checks when the dependencies module is unavailable.
@@ -59,6 +60,7 @@ FALLBACK_TOOL_CHECKS = {
     "listening_post": ["rtl_fm"],
     "tscm": ["rtl_fm"],
     "sweep": ["hackrf_sweep"],
+    "ook": ["rtl_433"],
 }
 
 

@@ -518,7 +518,7 @@ def proxy_mode_stream(agent_id: int, mode: str):
         try:
             with requests.get(url, headers=headers, stream=True, timeout=(5, 3600)) as resp:
                 resp.raise_for_status()
-                for chunk in resp.iter_content(chunk_size=1024):
+                for chunk in resp.iter_content(chunk_size=None):
                     if not chunk:
                         continue
                     yield chunk.decode("utf-8", errors="ignore")

@@ -53,10 +53,15 @@ var OokMode = (function () {
     // ---- Status ----
 
     function checkStatus() {
-        fetch('/ook/status')
+        var isAgent = typeof currentAgent !== 'undefined' && currentAgent !== 'local';
+        var statusUrl = isAgent ? `/controller/agents/${currentAgent}/ook/status` : '/ook/status';
+
+        fetch(statusUrl)
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                if (data.running) {
+                var res = data.result || data;
+                var running = Boolean(res.running || res.status === 'started' || res.status === 'running');
+                if (running) {
                     state.running = true;
                     updateUI(true);
                     connectSSE();
@@ -70,8 +75,16 @@ var OokMode = (function () {
 
     // ---- Start / Stop ----
 
-    function start() {
+    async function start() {
         if (state.running) return;
+
+        var isAgent = typeof currentAgent !== 'undefined' && currentAgent !== 'local';
+
+        // Check for conflicts on remote agent
+        if (isAgent && typeof checkAgentModeConflict === 'function') {
+            var canProceed = await checkAgentModeConflict('ook');
+            if (!canProceed) return;
+        }
 
         var remoteSDR = typeof getRemoteSDRConfig === 'function' ? getRemoteSDRConfig() : null;
         if (remoteSDR === false) return;
@@ -97,23 +110,26 @@ var OokMode = (function () {
             payload.rtl_tcp_port = remoteSDR.port;
         }
 
-        fetch('/ook/start', {
+        var startUrl = isAgent ? `/controller/agents/${currentAgent}/ook/start` : '/ook/start';
+
+        fetch(startUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-            if (data.status === 'started') {
+            var res = data.result || data;
+            if (res.status === 'started' || res.status === 'success') {
                 state.running = true;
                 state.frames = [];
                 state.frameCount = 0;
                 updateUI(true);
                 connectSSE();
                 clearOutput();
-                showCommand(data.command || '');
+                showCommand(res.command || '');
             } else {
-                alert('Error: ' + (data.message || 'Unknown error'));
+                alert('Error: ' + (res.message || data.message || 'Unknown error'));
             }
         })
         .catch(function (err) {
@@ -122,7 +138,10 @@ var OokMode = (function () {
     }
 
     function stop() {
-        fetch('/ook/stop', { method: 'POST' })
+        var isAgent = typeof currentAgent !== 'undefined' && currentAgent !== 'local';
+        var stopUrl = isAgent ? `/controller/agents/${currentAgent}/ook/stop` : '/ook/stop';
+
+        fetch(stopUrl, { method: 'POST' })
             .then(function (r) { return r.json(); })
             .then(function () {
                 state.running = false;
@@ -142,7 +161,10 @@ var OokMode = (function () {
 
     function connectSSE() {
         disconnectSSE();
-        var es = new EventSource('/ook/stream');
+        var isAgent = typeof currentAgent !== 'undefined' && currentAgent !== 'local';
+        var streamUrl = isAgent ? `/controller/agents/${currentAgent}/ook/stream` : '/ook/stream';
+
+        var es = new EventSource(streamUrl);
         es.onmessage = function (e) {
             try {
                 var msg = JSON.parse(e.data);
@@ -666,6 +688,21 @@ var OokMode = (function () {
         if (outputPanel) outputPanel.style.display = 'flex';
     }
 
+    function setRunning(running) {
+        state.running = Boolean(running);
+        updateUI(state.running);
+        if (state.running) {
+            connectSSE();
+        } else {
+            disconnectSSE();
+        }
+    }
+
+    function handleAgentChange() {
+        disconnectSSE();
+        checkStatus();
+    }
+
     // ---- Public API ----
 
     return {
@@ -673,6 +710,8 @@ var OokMode = (function () {
         destroy: destroy,
         start: start,
         stop: stop,
+        setRunning: setRunning,
+        handleAgentChange: handleAgentChange,
         setFreq: setFreq,
         addPreset: addPreset,
         removePreset: removePreset,
@@ -689,3 +728,5 @@ var OokMode = (function () {
         copyCommand: copyCommand,
     };
 })();
+
+window.setOokRunning = OokMode.setRunning;

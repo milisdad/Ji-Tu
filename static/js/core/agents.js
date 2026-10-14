@@ -351,6 +351,10 @@ function selectAgent(agentId) {
         if (typeof BluetoothMode !== 'undefined' && BluetoothMode.handleAgentChange) {
             BluetoothMode.handleAgentChange();
         }
+        // Notify OOK mode of agent change
+        if (typeof OokMode !== 'undefined' && OokMode.handleAgentChange) {
+            OokMode.handleAgentChange();
+        }
         // Re-enable listen button for local mode
         const listenBtn = document.getElementById('radioListenBtn');
         console.log('[agents.js] Enabling listen button, found:', listenBtn);
@@ -380,6 +384,10 @@ function selectAgent(agentId) {
         // Notify Bluetooth mode of agent change
         if (typeof BluetoothMode !== 'undefined' && BluetoothMode.handleAgentChange) {
             BluetoothMode.handleAgentChange();
+        }
+        // Notify OOK mode of agent change
+        if (typeof OokMode !== 'undefined' && OokMode.handleAgentChange) {
+            OokMode.handleAgentChange();
         }
         // Disable listen button for agent mode (audio can't stream over HTTP)
         const listenBtn = document.getElementById('radioListenBtn');
@@ -435,7 +443,7 @@ async function syncAgentModeStates(agentId) {
                 });
 
                 // Also check modes that might need to be marked as stopped
-                const allModes = ['sensor', 'pager', 'adsb', 'wifi', 'bluetooth', 'ais', 'dsc', 'acars', 'vdl2', 'aprs', 'rtlamr', 'tscm', 'satellite', 'listening_post'];
+                const allModes = ['sensor', 'pager', 'adsb', 'wifi', 'bluetooth', 'ais', 'dsc', 'acars', 'vdl2', 'aprs', 'rtlamr', 'tscm', 'satellite', 'listening_post', 'ook'];
                 allModes.forEach(mode => {
                     if (!agentRunningModes.includes(mode)) {
                         syncModeUI(mode, false, agentId);
@@ -464,6 +472,7 @@ async function syncLocalModeStates() {
         { mode: 'sensor', endpoint: '/sensor/status', runningKey: 'running' },
         { mode: 'adsb', endpoint: '/adsb/status', runningKey: 'running' },
         { mode: 'tscm', endpoint: '/tscm/status', runningKey: 'running' },
+        { mode: 'ook', endpoint: '/ook/status', runningKey: 'running' },
     ];
 
     for (const check of modeChecks) {
@@ -497,7 +506,7 @@ async function syncLocalModeStates() {
  */
 function showAgentModeWarnings(runningModes, modesDetail = {}) {
     // SDR modes that can't run simultaneously on same device
-    const sdrModes = ['sensor', 'pager', 'adsb', 'ais', 'acars', 'vdl2', 'aprs', 'rtlamr', 'listening_post', 'tscm', 'dsc'];
+    const sdrModes = ['sensor', 'pager', 'adsb', 'ais', 'acars', 'vdl2', 'aprs', 'rtlamr', 'listening_post', 'tscm', 'dsc', 'ook'];
     const runningSdrModes = runningModes.filter(m => sdrModes.includes(m));
 
     let warning = document.getElementById('agentModeWarning');
@@ -718,7 +727,8 @@ function syncModeUI(mode, isRunning, agentId = null) {
         'bluetooth': 'setBluetoothRunning',
         'acars': 'setAcarsRunning',
         'vdl2': 'setVdl2Running',
-        'listening_post': 'setListeningPostRunning'
+        'listening_post': 'setListeningPostRunning',
+        'ook': 'setOokRunning'
     };
 
     const setterName = uiSetters[mode];
