@@ -41,6 +41,10 @@ Basis fork: upstream `main` @ `7ff4f1d4`, di-fetch 2026-10-04.
 - README: bagian Dokumentasi dipisah menjadi Panduan Unjaya (Indonesia) dan
   Referensi upstream (Inggris); About repo GitHub diperbarui ke Ji-Tu/Unjaya
   (deskripsi, homepage, topik).
+- Dokumentasi penugasan pengujian protokol LoRa (Meshtastic dan MeshCore)
+  pada Agen 2 (`Ji-Tu-02`) dengan dukungan HackRF One (1-6000 MHz, bandwidth 20 MHz,
+  TX/RX), penyimpanan capture I/Q NVMe SSD 1 TB di `/data`, dan akselerasi RPi 5
+  di `docs/JI-TU-DEPLOY-TOPOLOGI.md` dan `docs/PANDUAN-UNJAYA.md`.
 
 ### Changed
 - Rebrand visual ke Unjaya: logo header, dashboard, dan login memakai

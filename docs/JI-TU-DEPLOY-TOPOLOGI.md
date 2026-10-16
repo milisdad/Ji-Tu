@@ -89,7 +89,17 @@ publik, sesuai topologi dokumen penelitian.
 |---|---|---|---|
 | **Controller** | `10.141.41.99:5050` | Server Controller | Pusat kendali, agregasi data, peta real-time, ground-truth pesawat, multilaterasi |
 | **Agen 1 (`Ji-Tu-01`)** | `10.141.41.17:8020` | • RTL-SDR Blog V4<br>• Ubertooth One<br>• U-Blox GPS USB | • Pengawasan ADS-B Pesawat (1090 MHz)<br>• Sniffer BLE: Motor Yamaha (Y-Connect), Wearable Device, Ponsel<br>• Geotagging stempel waktu/posisi |
-| **Agen 2 (`Ji-Tu-02`)** | `10.141.41.18:8020` | • HackRF One (1 MHz - 6 GHz)<br>• WiFi Alfa USB (Atheros AR9271, mode monitor) | • Stasiun Deteksi Drone Terpadu: Drone RF (915M/2.4G/5.8G) + Wi-Fi Remote ID (Open Drone ID)<br>• Transceiver Sub-GHz (Remote Mobil/Motor & Keyless) |
+| **Agen 2 (`Ji-Tu-02`)** | `10.141.41.18:8020` | • HackRF One (1 MHz - 6 GHz)<br>• WiFi Alfa USB (Atheros AR9271, mode monitor)<br>• NVMe SSD 1 TB (`/data`) | • Stasiun Deteksi Drone Terpadu: Drone RF (915M/2.4G/5.8G) + Wi-Fi Remote ID (Open Drone ID)<br>• Transceiver Sub-GHz (Remote Mobil/Motor & Keyless)<br>• Testbed & Analisis Sinyal LoRa / Meshtastic / MeshCore |
+
+### 6.1 Rekomendasi Pengujian LoRa (Meshtastic & MeshCore)
+
+Pengujian sinyal dan perangkat **LoRa (Meshtastic & MeshCore)** ditetapkan dan paling cocok dilakukan pada **Agen 2 (`Ji-Tu-02`)** dengan pertimbangan teknis:
+1. **Cakupan Frekuensi Penuh & Multi-Band**: HackRF One (1 MHz – 6.000 MHz) mencakup seluruh band LoRa yang digunakan di Indonesia (AS923: 920–925 MHz, ISM 433 MHz), varian US915/AU915, hingga varian modern **2.4 GHz LoRa** (SX1280) yang tidak dapat dijangkau oleh RTL-SDR di Agen 1.
+2. **Bandwidth Spektrum Lebar (20 MHz)**: Memungkinkan pemantauan seluruh kanal frekuensi LoRa secara simultan (*hopping analysis*, *waterfall*, dan *spectrum analyzer*) tanpa kehilangan paket akibat perpindahan frekuensi (*re-tuning*).
+3. **Kemampuan TX & RX (Half-Duplex)**: Mendukung penerimaan pasif, *packet injection*, *replay attack*, transmisi beacon, maupun simulasi node palsu untuk evaluasi keamanan protokol mesh.
+4. **Penyimpanan Berkecepatan Tinggi (NVMe SSD 1 TB di `/data`)**: Menyediakan ruang penyimpanan permanen yang lega (~443 GB bebas) untuk *recording raw baseband I/Q samples* berukuran gigabyte tanpa membebani MicroSD sistem.
+5. **Daya Komputasi Tinggi**: Raspberry Pi 5 (Quad Cortex-A76 @ 2.4 GHz) memiliki daya proses yang mumpuni untuk demodulasi real-time *Chirp Spread Spectrum* (CSS) dan eksekusi flowgraph GNU Radio (`gr-lora`).
 
 > Catatan: validasi end-to-end (agent -> ZeroTier -> controller) harus diuji di
 > lingkungan nyata; angka throughput/latensi diverifikasi, bukan diasumsikan.
+

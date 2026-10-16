@@ -33,7 +33,7 @@ Sumber RF -> Sensor (USB) -> Agent (Raspberry Pi) -> ZeroTier -> Controller (lap
 - **Agent**: Raspberry Pi dengan satu atau beberapa perangkat SDR. Bisa
   terspesialisasi:
   * **Agen 1 (Ji-Tu-01)**: RTL-SDR (ADS-B Pesawat), Ubertooth One (BLE Motor Yamaha Y-Connect, Wearable, Ponsel), U-Blox GPS.
-  * **Agen 2 (Ji-Tu-02)**: HackRF One (Drone RF 915M/2.4G/5.8G, Sub-GHz Remote Transceiver), WiFi Alfa mode monitor (Drone Wi-Fi Remote ID & WiFi Recon).
+  * **Agen 2 (Ji-Tu-02)**: HackRF One (Drone RF 915M/2.4G/5.8G, Sub-GHz Remote Transceiver, Testbed LoRa Meshtastic & MeshCore), WiFi Alfa mode monitor (Drone Wi-Fi Remote ID & WiFi Recon), NVMe SSD 1 TB di `/data` (penyimpanan raw capture I/Q).
   Agent otomatis melaporkan hanya mode yang perangkatnya tersedia.
 - **Controller**: laptop/komputer berisi dashboard yang mengagregasi dan
   mengendalikan agent. Tidak perlu SDR lokal.
@@ -159,6 +159,15 @@ POST /controller/agents/<id>/sweep/stop
 Param opsional: `start_mhz`, `stop_mhz` (1-7250), `bin_hz` (2445-5000000),
 `lna_gain` (0-40), `vga_gain` (0-62), `one_shot`. Mode `sweep` hanya muncul pada
 agent yang punya `hackrf_sweep` dan perangkat HackRF.
+
+### Pengujian LoRa (Meshtastic & MeshCore) di Agen 2
+
+Untuk pengujian perangkat dan protokol jaringan mesh LoRa (**Meshtastic** dan **MeshCore**), **Agen 2 (`Ji-Tu-02`)** ditetapkan sebagai node uji utama dengan keunggulan:
+- **Cakupan Multi-Band**: HackRF One menjangkau seluruh frekuensi LoRa Indonesia (AS923: 920–925 MHz, ISM 433 MHz, 915 MHz), hingga **2.4 GHz LoRa** (SX1280).
+- **Spektrum Luas (20 MHz)**: Memantau saluran transmisi dan frekuensi hopping LoRa secara simultan.
+- **Transceiver TX & RX**: Memungkinkan pengujian injeksi paket, simulasi node, dan audit keamanan protokol mesh.
+- **Penyimpanan Cepat NVMe 1 TB di `/data`**: Direktori `/data` di Agen 2 dipasang permanen untuk menampung *raw baseband I/Q capture* skala gigabyte tanpa menghabiskan MicroSD.
+- **Daya Komputasi RPi 5**: Mampu menjalankan pemrosesan sinyal modulasi *Chirp Spread Spectrum* (CSS) dan flowgraph GNU Radio secara real-time.
 
 ## 8. Langkah 6 - Ekspor data riset (E1-E5)
 
