@@ -190,6 +190,18 @@ Beri `exp` berbeda tiap eksperimen agar mudah dipisah saat analisis.
   tanpa alasan.
 - Ganti kata sandi `admin` controller; jangan pakai default.
 - Jangan ekspos port 8020/5050 ke internet; akses hanya lewat overlay ZeroTier.
+- **Data RF wajib diescape sebelum masuk HTML.** Field yang datang dari udara
+  (callsign APRS, pesan pager, SSID, nama perangkat BLE) dikendalikan pihak luar
+  dan bisa berisi HTML. Pakai `escapeHtml()` untuk isi teks, dan
+  **`escapeAttr()`** untuk nilai di dalam atribut atau argumen string `onclick`
+  karena `escapeHtml` tidak meng-escape tanda kutip. Keduanya ada di
+  `static/js/core/utils.js`. XSS dashboard APRS yang sempat ada ditutup di
+  v2.34.9; detailnya di [CHANGELOG.Ji-Tu.md](../CHANGELOG.Ji-Tu.md).
+- Ingat rantai dampaknya: proxy `/controller/*` berjalan dengan sesi operator dan
+  agent berjalan sebagai root, jadi XSS di dashboard bisa berlanjut ke eksekusi
+  perintah di agent. Perlakukan celah tampilan sebagai isu serius.
+- Pekerjaan hardening yang belum dikerjakan dicatat di
+  [TODO.Ji-Tu.md](../TODO.Ji-Tu.md).
 - Rujuk [SECURITY.md](SECURITY.md).
 
 ## 10. Pemecahan masalah

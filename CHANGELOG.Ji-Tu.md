@@ -61,6 +61,31 @@ Basis fork: upstream `main` @ `7ff4f1d4`, di-fetch 2026-10-04.
   localStorage, nama logger, variabel `window.INTERCEPT_*`, path `/controller`,
   kelas CSS) tidak diubah.
 
+### Security
+- **XSS dashboard APRS ditutup (v2.34.9).** Field paket APRS (`callsign`,
+  `packet_type`, `altitude`/`speed`/`course`) berasal dari RF dan dikendalikan
+  pihak luar, tetapi disisipkan mentah ke `innerHTML` dan HTML popup Leaflet di
+  `static/js/aprs_dashboard.js` (log paket, label marker, dua popup stasiun).
+  Pemancar yang mengirim callsign seperti `<img src=x onerror=...>` memperoleh
+  eksekusi skrip di dashboard operator; karena proxy `/controller/*` memakai
+  sesi operator dan agent berjalan sebagai root, celah ini berantai ke eksekusi
+  perintah di agent. Nilai kini diescape, dan pencarian selektor
+  `[data-callsign="..."]` memakai `CSS.escape`.
+- **Konteks atribut wajib `escapeAttr`, bukan `escapeHtml`.** `escapeHtml`
+  (textContent ke innerHTML) tidak meng-escape tanda kutip, sehingga nilai di
+  dalam atribut atau argumen string `onclick` dapat keluar dari pembatasnya.
+  `createAprsCard` di `static/js/components/signal-cards.js` kini memakai
+  `escapeAttr` untuk `data-callsign`, `data-raw`, dan argumen `onclick`; isi
+  teks tetap `escapeHtml`. Pola serupa di komponen lain belum ditinjau, lihat
+  [TODO.Ji-Tu.md](TODO.Ji-Tu.md).
+- Audit 2026-10-23 memastikan tidak ada PHP maupun Node.js di mesin deployment
+  Ji-Tu (controller dan kedua agent), sehingga permukaan web hanya Flask
+  `:5050`, agent `:8020`, dan JS klien. Sisi server diperiksa aman untuk hal
+  berikut: semua `subprocess` memakai bentuk list (tanpa `shell=True`), akses
+  capture lewat pencarian metadata sehingga id dari masukan tidak menjadi path
+  (tanpa path traversal), dan auth agent memakai IP peer TCP, bukan header yang
+  bisa dipalsukan.
+
 ### Notes
 - Basis upstream bersifat receive-only (penerimaan sinyal siaran publik).
   Penambahan kemampuan transmisi aktif atau jamming memerlukan landasan
