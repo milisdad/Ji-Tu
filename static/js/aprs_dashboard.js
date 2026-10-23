@@ -11,6 +11,18 @@
 const LOCAL_STOP_TIMEOUT_MS = 8000;
 const REMOTE_STOP_TIMEOUT_MS = 8000;
 
+// XSS guard: APRS fields (callsign, comment, altitude, ...) come from RF and are
+// attacker-controlled, so escape them before they enter innerHTML/popup HTML.
+// Prefer the shared helpers from core/utils.js; fall back if load order changes.
+const _aprsEsc = (typeof escapeHtml === 'function') ? escapeHtml : function (s) {
+    const d = document.createElement('div');
+    d.textContent = (s === null || s === undefined) ? '' : String(s);
+    return d.innerHTML;
+};
+const _aprsSel = (window.CSS && typeof CSS.escape === 'function')
+    ? function (s) { return CSS.escape(String(s === null || s === undefined ? '' : s)); }
+    : function (s) { return String(s === null || s === undefined ? '' : s).replace(/["'\\\]]/g, '\\$&'); };
+
 // The dashboard has no live GPS stream; it centres on the observer location.
 let gpsLastPosition = null;
 let gpsConnected = false;
@@ -781,7 +793,7 @@ function processAprsPacket(packet) {
     const callsign = packet.callsign || 'UNKNOWN';
     const packetType = packet.packet_type || 'unknown';
 
-    logEntry.innerHTML = `<span style="color: var(--text-muted);">${time}</span> <span style="color: var(--accent-cyan); font-weight: bold;">${callsign}</span> <span style="color: var(--accent-green);">[${packetType}]</span>`;
+    logEntry.innerHTML = `<span style="color: var(--text-muted);">${time}</span> <span style="color: var(--accent-cyan); font-weight: bold;">${_aprsEsc(callsign)}</span> <span style="color: var(--accent-green);">[${_aprsEsc(packetType)}]</span>`;
 
     // Remove placeholder if present
     const placeholder = logEl.querySelector('div[style*="color: var(--text-muted)"]');
@@ -829,7 +841,7 @@ function buildAprsMarkerIcon(packet) {
     const html = `
         <div class="aprs-map-marker ${category}">
             <span class="aprs-map-marker-icon">${getAprsMarkerSvg(category)}</span>
-            <span class="aprs-map-marker-label">${callsign}</span>
+            <span class="aprs-map-marker-label">${_aprsEsc(callsign)}</span>
         </div>
     `;
     return L.divIcon({
@@ -861,12 +873,12 @@ function updateAprsMarker(packet) {
         aprsMarkers[callsign].setIcon(buildAprsMarkerIcon(packet));
         aprsMarkers[callsign].setPopupContent(`
             <div style="font-family: var(--font-data);">
-                <strong>${callsign}</strong><br>
+                <strong>${_aprsEsc(callsign)}</strong><br>
                 Position: ${lat.toFixed(4)}, ${lon.toFixed(4)}<br>
                 ${distStr}
-                ${packet.altitude ? `Altitude: ${packet.altitude} ft<br>` : ''}
-                ${packet.speed ? `Speed: ${packet.speed} kts<br>` : ''}
-                ${packet.course ? `Course: ${packet.course}°<br>` : ''}
+                ${packet.altitude ? `Altitude: ${_aprsEsc(packet.altitude)} ft<br>` : ''}
+                ${packet.speed ? `Speed: ${_aprsEsc(packet.speed)} kts<br>` : ''}
+                ${packet.course ? `Course: ${_aprsEsc(packet.course)}°<br>` : ''}
             </div>
         `);
     } else {
@@ -880,12 +892,12 @@ function updateAprsMarker(packet) {
 
         marker.bindPopup(`
             <div style="font-family: var(--font-data);">
-                <strong>${callsign}</strong><br>
+                <strong>${_aprsEsc(callsign)}</strong><br>
                 Position: ${lat.toFixed(4)}, ${lon.toFixed(4)}<br>
                 ${distStr}
-                ${packet.altitude ? `Altitude: ${packet.altitude} ft<br>` : ''}
-                ${packet.speed ? `Speed: ${packet.speed} kts<br>` : ''}
-                ${packet.course ? `Course: ${packet.course}°<br>` : ''}
+                ${packet.altitude ? `Altitude: ${_aprsEsc(packet.altitude)} ft<br>` : ''}
+                ${packet.speed ? `Speed: ${_aprsEsc(packet.speed)} kts<br>` : ''}
+                ${packet.course ? `Course: ${_aprsEsc(packet.course)}°<br>` : ''}
             </div>
         `);
 
@@ -913,7 +925,7 @@ function updateAprsStationList(packet) {
     }
 
     // Check if station already exists
-    let stationEl = listEl.querySelector(`[data-callsign="${callsign}"]`);
+    let stationEl = listEl.querySelector(`[data-callsign="${_aprsSel(callsign)}"]`);
     const isExisting = !!stationEl;
 
     // Prepare message object for card creation

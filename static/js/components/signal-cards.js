@@ -264,6 +264,19 @@ const SignalCards = (function() {
         return div.innerHTML;
     }
 
+    // Escape for HTML attribute / inline-handler string context. escapeHtml()
+    // does NOT escape quotes, so values placed inside attributes or onclick
+    // JS-strings must use this to avoid breaking out of the delimiter.
+    function escapeAttr(text) {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/'/g, '&#39;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
     /**
      * Format timestamp to relative time
      */
@@ -613,7 +626,7 @@ const SignalCards = (function() {
             <div class="signal-card-header">
                 <div class="signal-card-badges">
                     <span class="signal-proto-badge aprs">APRS</span>
-                    <span class="signal-freq-badge signal-station-clickable" data-callsign="${escapeHtml(msg.callsign || 'Unknown')}" data-raw="${msg.raw ? escapeHtml(msg.raw) : ''}" onclick="SignalCards.showStationRawData(this)" title="Click to view raw data">${escapeHtml(msg.callsign || 'Unknown')}</span>
+                    <span class="signal-freq-badge signal-station-clickable" data-callsign="${escapeAttr(msg.callsign || 'Unknown')}" data-raw="${msg.raw ? escapeAttr(msg.raw) : ''}" onclick="SignalCards.showStationRawData(this)" title="Click to view raw data">${escapeHtml(msg.callsign || 'Unknown')}</span>
                 </div>
                 ${status !== 'baseline' ? `
                 <span class="signal-status-pill" data-status="${status}">
@@ -642,7 +655,7 @@ const SignalCards = (function() {
                 </div>
                 ` : ''}
                 ${hasPosition ? `
-                <div class="signal-mini-map" onclick="SignalCards.showOnMap(${msg.latitude}, ${msg.longitude}, '${escapeHtml(msg.callsign)}')">
+                <div class="signal-mini-map" onclick="SignalCards.showOnMap(${msg.latitude}, ${msg.longitude}, '${escapeAttr(msg.callsign)}')">
                     <div class="signal-map-pin"></div>
                     <span class="signal-map-coords">${msg.latitude.toFixed(4)}°, ${msg.longitude.toFixed(4)}°</span>
                 </div>
@@ -656,8 +669,8 @@ const SignalCards = (function() {
                     Details
                 </button>
                 <div class="signal-card-actions">
-                    ${hasPosition ? `<button class="signal-action-btn primary" onclick="SignalCards.showOnMap(${msg.latitude}, ${msg.longitude}, '${escapeHtml(msg.callsign)}')">Map</button>` : ''}
-                    <button class="signal-action-btn" onclick="SignalCards.muteAddress('${escapeHtml(msg.callsign)}')">Mute</button>
+                    ${hasPosition ? `<button class="signal-action-btn primary" onclick="SignalCards.showOnMap(${msg.latitude}, ${msg.longitude}, '${escapeAttr(msg.callsign)}')">Map</button>` : ''}
+                    <button class="signal-action-btn" onclick="SignalCards.muteAddress('${escapeAttr(msg.callsign)}')">Mute</button>
                 </div>
             </div>
             <div class="signal-advanced-panel">
