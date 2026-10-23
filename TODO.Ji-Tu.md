@@ -37,9 +37,11 @@ ZeroTier.
 ## Operasional lapangan
 
 - [ ] **Dapatkan GPS fix di Ji-Tu-01.** u-blox 7 ada di `/dev/ttyACM0` dan gpsd
-  sudah berjalan, tetapi per 2026-10-23 status masih 22 satelit terlihat, 0
-  terkunci, `fix_mode=1`. Perlu antena dengan pandangan langit terbuka. Posisi
-  akan terisi otomatis begitu fix diperoleh.
+  sudah berjalan, tetapi belum pernah mendapat fix. Pengukuran 2026-10-23:
+  `fix_mode=1`, 20 satelit terlihat, 0 terkunci (2026-10-19: 22 terlihat, 0
+  terkunci; jumlah satelit terlihat berfluktuasi, yang menetap adalah 0
+  terkunci). Perlu antena dengan pandangan langit terbuka. Posisi akan terisi
+  otomatis begitu fix diperoleh.
 - [ ] **Selaraskan versi agent bila diinginkan.** Controller di
   `ji-tu-v2.34.9`, kedua agent masih `ji-tu-v2.34.8`. Tambalan XSS hanya
   menyentuh JS yang disajikan controller, jadi agent tidak terdampak secara
